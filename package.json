@@ -63,5 +63,9 @@
     "prepublishOnly": "npm run build && npm test",
     "audit:a11y": "node scripts/audit-a11y.mjs",
     "check": "npm run typecheck && npm test && npm run audit:a11y"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

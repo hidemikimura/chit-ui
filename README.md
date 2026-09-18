@@ -423,6 +423,18 @@ IME の実挙動は合成イベントでは再現しきれないため、リリ�
 - iOS Safari: パネルが全画面になり、キーボード表示中も入力欄が隠れないこと
 - Android Chrome: 変換中の Enter で誤送信しないこと
 
+## 公開
+
+```sh
+npm login
+npm run check
+npm publish
+```
+
+`package.json` の `publishConfig.access` が `public` なので、`--access public` を付ける必要は
+ありません。スコープ付きパッケージは既定で非公開扱いになり、その場合 npm の無料プランでは
+`402 Payment Required` になります。
+
 ## ライセンス
 
 MIT
