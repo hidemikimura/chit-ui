@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Chit UI demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        font-family: system-ui, sans-serif;
+        line-height: 1.7;
+        color: #222;
+      }
+      main { max-width: 42rem; }
+      .filler { color: #888; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Chit UI demo</h1>
+      <p>右下のランチャーが描画されていれば、要素の登録とスタイルの適用ができています。</p>
+      <p class="filler">
+        このページはウィジェットの下に敷く本文の代わりです。パネルを開いたとき、閉じたときの
+        重なりや、スマホ幅での全画面表示を目で確かめるために置いています。
+      </p>
+    </main>
+
+    <chit-ui id="chat"></chit-ui>
+
+    <script type="module" src="../src/index.js"></script>
+    <script type="module">
+      const chat = document.getElementById('chat');
+      console.log('[demo] chit-ui element:', chat);
+      console.log('[demo] state:', chat.state);
+    </script>
+  </body>
+</html>
