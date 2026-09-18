@@ -56,10 +56,12 @@
   "scripts": {
     "dev": "web-dev-server --node-resolve --open /demo/ --watch",
     "typecheck": "tsc --noEmit",
-    "types": "tsc -p tsconfig.build.json && cp src/global.d.ts dist/types/",
+    "types": "tsc -p tsconfig.build.json && node scripts/finish-types.mjs",
     "bundle": "rollup -c && node scripts/check-size.js",
     "build": "npm run typecheck && npm run types && npm run bundle",
     "test": "web-test-runner \"test/**/*.test.js\" --node-resolve",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "audit:a11y": "node scripts/audit-a11y.mjs",
+    "check": "npm run typecheck && npm test && npm run audit:a11y"
   }
 }

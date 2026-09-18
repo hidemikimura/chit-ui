@@ -24,11 +24,12 @@
  * @property {boolean} [streaming]
  * @property {unknown} [meta]                  Never touched by the library.
  *
+ * @typedef {MessageBase & { text: string }} TextMessage
  * @typedef {MessageBase & { html: string }} HtmlMessage
  * @typedef {MessageBase & { template: import('lit').TemplateResult }} TemplateMessage
  * @typedef {MessageBase & { element: HTMLElement }} ElementMessage
  * @typedef {MessageBase & { component: (new () => HTMLElement) | string, props?: Record<string, unknown> }} ComponentMessage
- * @typedef {HtmlMessage | TemplateMessage | ElementMessage | ComponentMessage} Message
+ * @typedef {TextMessage | HtmlMessage | TemplateMessage | ElementMessage | ComponentMessage} Message
  */
 
 /**
@@ -44,12 +45,14 @@
 
 /**
  * @typedef {Object} ClosedTheme
- * @property {number} [size]                   Launcher edge length, px.
+ * @property {number | 'auto'} [size]          Launcher edge length in px, or 'auto' to let its content decide.
  * @property {Position} [position]
  * @property {Offset} [offset]
  * @property {number} [radius]
  * @property {string | null} [image]           Icon image URL; null clears the default.
  * @property {string | null} [label]
+ * @property {(new () => HTMLElement) | string | null} [component]  A component that draws the whole launcher.
+ * @property {Record<string, unknown>} [props] Properties written to that component.
  * @property {{ background?: string, text?: string, shadow?: string }} [colors]
  * @property {Animation & { idle?: 'none' | 'pulse' | 'bounce' }} [animation]
  */
@@ -84,8 +87,8 @@
  * @property {{ title?: string | null, logo?: string | null, avatar?: string | null }} [header]
  * @property {{ image?: string | null }} [background]
  * @property {OpenColors} [colors]
- * @property {Animation} [animation]
- * @property {{ maxRows?: number, placeholder?: string }} [input]
+ * @property {Animation & { scroll?: 'smooth' | 'instant' }} [animation]
+ * @property {{ maxRows?: number, placeholder?: string | null }} [input]
  */
 
 /**
@@ -99,15 +102,42 @@
  */
 
 /**
- * Fully resolved theme: defaults merged in, `closed` split per device.
+ * A theme with every gap filled in and `closed` narrowed to the device in use.
+ * This is what the render functions and the CSS generator read.
+ *
+ * @typedef {Object} ResolvedClosed
+ * @property {number | 'auto'} size
+ * @property {Position} position
+ * @property {{ x: number, y: number }} offset
+ * @property {number} radius
+ * @property {string | null} image
+ * @property {string | null} label
+ * @property {(new () => HTMLElement) | string | null} component
+ * @property {Record<string, unknown>} props
+ * @property {{ background: string, text: string, shadow: string }} colors
+ * @property {{ enter: Effect, exit: Effect, duration: number, idle: 'none' | 'pulse' | 'bounce' }} animation
+ *
+ * @typedef {Object} ResolvedOpen
+ * @property {number} width
+ * @property {number} height
+ * @property {Position} position
+ * @property {{ x: number, y: number }} offset
+ * @property {number} radius
+ * @property {'hidden' | 'visible'} launcher
+ * @property {{ title: string | null, logo: string | null, avatar: string | null }} header
+ * @property {{ image: string | null }} background
+ * @property {Required<OpenColors>} colors
+ * @property {{ enter: Effect, exit: Effect, duration: number, scroll: 'smooth' | 'instant' }} animation
+ * @property {{ maxRows: number, placeholder: string | null }} input
  *
  * @typedef {Object} ResolvedTheme
  * @property {number} breakpoint
  * @property {number} zIndex
  * @property {{ family: string, size: number }} font
- * @property {{ pc: Required<Omit<ClosedTheme, 'image' | 'label'>> & { image: string | null, label: string | null }, mobile: Required<Omit<ClosedTheme, 'image' | 'label'>> & { image: string | null, label: string | null } }} closed
- * @property {OpenTheme} open
+ * @property {ResolvedClosed} closed
+ * @property {ResolvedOpen} open
  * @property {{ animation: { exit: Effect, duration: number } }} hidden
+ * @property {Device} device       Which bucket `closed` was narrowed to.
  */
 
 export {};

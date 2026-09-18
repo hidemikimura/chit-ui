@@ -13,13 +13,65 @@
         color: #222;
       }
       main { max-width: 42rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+      .controls button {
+        padding: 0.4em 0.9em;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        font: inherit;
+        cursor: pointer;
+      }
+      .controls button:hover { background: #f4f4f5; }
+      #log {
+        max-height: 14rem;
+        overflow-y: auto;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e4e4e7;
+        border-radius: 8px;
+        background: #fafafa;
+        font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+        white-space: pre-wrap;
+      }
       .filler { color: #888; }
     </style>
   </head>
   <body>
     <main>
       <h1>Chit UI demo</h1>
-      <p>右下のランチャーが描画されていれば、要素の登録とスタイルの適用ができています。</p>
+      <p>右下のランチャーをクリックするとパネルが開きます。Esc でも閉じられます。</p>
+
+      <div class="controls">
+        <button data-call="open">open()</button>
+        <button data-call="close">close()</button>
+        <button data-call="hide">hide()</button>
+        <button data-call="show">show()</button>
+        <button data-call="toggle">toggle()</button>
+        <button id="cancel-once">次の open をキャンセル</button>
+        <button id="clear-log">ログを消す</button>
+      </div>
+
+      <h2>メッセージ</h2>
+      <div class="controls">
+        <button id="say-hello">会話を流し込む</button>
+        <button id="stream">ストリーミング</button>
+        <button id="typing">入力中の切り替え</button>
+        <button id="component">コンポーネント発言</button>
+        <button id="bulk">30 件追加</button>
+        <button id="limit">文字数制限 20 の切り替え</button>
+        <button id="lock">入力ロックの切り替え</button>
+        <button id="unread">未読件数 +1</button>
+        <button id="clear">消す</button>
+      </div>
+
+      <h3>崩れ防止フィクスチャ</h3>
+      <div class="controls" id="fixtures"></div>
+
+      <h2>テーマ</h2>
+      <div class="controls" id="themes"></div>
+
+      <div id="log"></div>
+
       <p class="filler">
         このページはウィジェットの下に敷く本文の代わりです。パネルを開いたとき、閉じたときの
         重なりや、スマホ幅での全画面表示を目で確かめるために置いています。
@@ -29,10 +81,246 @@
     <chit-ui id="chat"></chit-ui>
 
     <script type="module" src="../src/index.js"></script>
+    <script type="module" src="./order-card.js"></script>
+    <script type="module" src="./pill-launcher.js"></script>
     <script type="module">
       const chat = document.getElementById('chat');
-      console.log('[demo] chit-ui element:', chat);
-      console.log('[demo] state:', chat.state);
+      const log = document.getElementById('log');
+
+      const write = (line) => {
+        log.textContent += `${line}\n`;
+        log.scrollTop = log.scrollHeight;
+      };
+
+      for (const name of [
+        'chat-before-open', 'chat-open', 'chat-before-close', 'chat-close',
+        'chat-hide', 'chat-show', 'chat-state-change', 'chat-breakpoint-change',
+      ]) {
+        chat.addEventListener(name, (event) => {
+          write(`${name} ${JSON.stringify(event.detail)}`);
+        });
+      }
+
+      document.querySelectorAll('[data-call]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const method = button.dataset.call;
+          const settled = await chat[method]();
+          write(`  ${method}() -> ${settled}`);
+        });
+      });
+
+      document.getElementById('cancel-once').addEventListener('click', () => {
+        write('(次の chat-before-open を preventDefault します)');
+        chat.addEventListener('chat-before-open', (e) => e.preventDefault(), { once: true });
+      });
+
+      document.getElementById('clear-log').addEventListener('click', () => {
+        log.textContent = '';
+      });
+
+      const { fixtures } = await import('./fixtures.js');
+      const { OrderCard } = await import('./order-card.js');
+      const { PillLauncher } = await import('./pill-launcher.js');
+
+      let seq = 0;
+      const push = (message) => {
+        chat.messages = [...chat.messages, { id: `m${++seq}`, ...message }];
+      };
+
+      document.getElementById('say-hello').addEventListener('click', () => {
+        push({ role: 'system', html: '<p>オペレーターが参加しました</p>' });
+        push({
+          role: 'assistant', name: 'サポート', avatar: 'data:image/svg+xml;utf8,' +
+            encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#2563eb"/><text x="16" y="21" font-size="14" fill="#fff" text-anchor="middle">S</text></svg>'),
+          html: '<p>お問い合わせありがとうございます。ご用件をどうぞ。</p>',
+          time: new Date(),
+        });
+        push({ role: 'user', text: '領収証を再発行したいです\n宛名も変えたいです', time: new Date(), status: 'sent' });
+      });
+
+      document.getElementById('stream').addEventListener('click', async () => {
+        const id = `m${++seq}`;
+        const words = 'ご注文履歴の画面から、対象の注文を開いて「領収証を発行」を押すと PDF が出ます。宛名は発行時に変更できます。'.split('');
+        let text = '';
+        chat.busy = true;
+        chat.typing = true;
+        await new Promise((r) => setTimeout(r, 600));
+        chat.typing = false;
+        for (const ch of words) {
+          text += ch;
+          const rest = chat.messages.filter((m) => m.id !== id);
+          chat.messages = [...rest, { id, role: 'assistant', html: `<p>${text}</p>`, streaming: true }];
+          await new Promise((r) => setTimeout(r, 30));
+        }
+        const rest = chat.messages.filter((m) => m.id !== id);
+        chat.messages = [...rest, { id, role: 'assistant', html: `<p>${text}</p>`, time: new Date() }];
+        chat.busy = false;
+      });
+
+      document.getElementById('typing').addEventListener('click', () => {
+        chat.typing = !chat.typing;
+      });
+
+      document.getElementById('component').addEventListener('click', () => {
+        push({
+          role: 'assistant',
+          component: OrderCard,
+          props: {
+            order: {
+              id: 'A-2026-0918',
+              total: 12800,
+              items: [
+                { name: '万年筆 (F)', price: 9800 },
+                { name: 'インク 2 本', price: 3000 },
+              ],
+            },
+          },
+        });
+      });
+
+      document.getElementById('bulk').addEventListener('click', () => {
+        const start = seq;
+        const batch = Array.from({ length: 30 }, (_, i) => ({
+          id: `m${++seq}`,
+          role: i % 2 ? 'assistant' : 'user',
+          html: `<p>${i + 1} 件目の発言です。スクロールの追従を確かめるための行です。</p>`,
+        }));
+        chat.messages = [...chat.messages, ...batch];
+        write(`30 件追加 (m${start + 1}..m${seq})`);
+      });
+
+      // 送信されたテキストを messages に積むのは利用者の仕事。ここではその最小例。
+      chat.addEventListener('chat-submit', async (event) => {
+        const text = event.detail.text;
+        // text 形式なのでエスケープ不要、改行もそのまま出ます
+        push({ role: 'user', text, time: new Date(), status: 'sent' });
+
+        chat.busy = true;
+        chat.typing = true;
+        await new Promise((r) => setTimeout(r, 700));
+        chat.typing = false;
+        push({
+          role: 'assistant',
+          name: 'サポート',
+          html: `<p>「${escapeHtml(text)}」ですね。承知しました。</p>`,
+          time: new Date(),
+        });
+        chat.busy = false;
+      });
+
+      function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+      }
+
+      document.getElementById('limit').addEventListener('click', () => {
+        chat.maxLength = chat.maxLength === undefined ? 20 : undefined;
+        write(`maxLength: ${chat.maxLength}`);
+      });
+
+      document.getElementById('lock').addEventListener('click', () => {
+        chat.inputDisabled = !chat.inputDisabled;
+        write(`inputDisabled: ${chat.inputDisabled}`);
+      });
+
+      // 独自ランチャーの props を差し替えると、同じインスタンスに書き込まれます。
+      let unread = 3;
+      document.getElementById('unread').addEventListener('click', () => {
+        unread += 1;
+        const closed = chat.theme.closed;
+        if (!closed?.component) {
+          write('先に「独自ランチャー」テーマを選んでください');
+          return;
+        }
+        chat.theme = { ...chat.theme, closed: { ...closed, props: { ...closed.props, unread } } };
+        write(`unread: ${unread}`);
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        chat.messages = [];
+        chat.typing = false;
+        chat.busy = false;
+      });
+
+      const fixtureBar = document.getElementById('fixtures');
+      for (const [name, markup] of Object.entries(fixtures)) {
+        const button = document.createElement('button');
+        button.textContent = name;
+        button.addEventListener('click', () => push({ role: 'assistant', html: markup }));
+        fixtureBar.append(button);
+      }
+
+      chat.addEventListener('chat-message-click', (event) => {
+        const action = event.detail.target.closest?.('[data-action]')?.dataset.action;
+        if (action) write(`chat-message-click action=${action} id=${event.detail.message.id}`);
+      });
+      chat.addEventListener('chat-scroll-top', () => write('chat-scroll-top（過去ログの読み込み位置）'));
+      chat.addEventListener('chat-input', (event) => {
+        if (event.detail.value.length % 5 === 0) write(`chat-input "${event.detail.value}"`);
+      });
+      chat.addEventListener('toggle-details', (event) =>
+        write(`toggle-details ${JSON.stringify(event.detail)}`));
+
+      const presets = {
+        '既定': {},
+        'ダーク': {
+          open: {
+            colors: {
+              background: '#16181d', text: '#e8eaed', accent: '#7aa2f7',
+              border: '#2a2e37', headerBackground: '#1c1f26', headerText: '#e8eaed',
+              userBubble: '#7aa2f7', userText: '#11131a',
+              assistantBubble: '#22262f', assistantText: '#e8eaed',
+              systemText: '#9aa0ac',
+              inputBackground: '#1c1f26', inputText: '#e8eaed', inputPlaceholder: '#9aa0ac',
+            },
+            header: { title: 'サポート' },
+          },
+          closed: { colors: { background: '#7aa2f7', text: '#11131a' } },
+        },
+        '独自ランチャー': {
+          closed: { component: PillLauncher, props: { unread: 3, online: true }, label: 'サポートに相談' },
+        },
+        'スクロール即時': {
+          open: { animation: { scroll: 'instant' } },
+        },
+        '左下・角丸なし': {
+          closed: { position: 'bottom-left', radius: 8, size: 52 },
+          open: { position: 'bottom-left', radius: 0, width: 420 },
+        },
+        '大きめ・脈打つ': {
+          closed: { size: 76, animation: { idle: 'pulse' } },
+        },
+        'スライド': {
+          closed: { animation: { enter: 'slide', exit: 'slide', duration: 260 } },
+          open: { animation: { enter: 'slide', exit: 'slide', duration: 260 } },
+        },
+        '画像アイコン': {
+          closed: {
+            image:
+              'data:image/svg+xml;utf8,' +
+              encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+                  '<rect width="64" height="64" fill="#f59e0b"/>' +
+                  '<circle cx="32" cy="26" r="11" fill="#fff"/>' +
+                  '<path d="M10 60c4-13 12-19 22-19s18 6 22 19z" fill="#fff"/>' +
+                '</svg>',
+              ),
+          },
+        },
+      };
+
+      const themeBar = document.getElementById('themes');
+      for (const [name, theme] of Object.entries(presets)) {
+        const button = document.createElement('button');
+        button.textContent = name;
+        button.addEventListener('click', () => {
+          chat.theme = theme;
+          write(`theme: ${name}`);
+        });
+        themeBar.append(button);
+      }
+
+      write(`state: ${chat.state} / device: ${chat.device}`);
     </script>
   </body>
 </html>
