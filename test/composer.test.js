@@ -328,3 +328,134 @@ describe('composer state', () => {
     expect(el.shadowRoot?.activeElement).to.equal(input(el));
   });
 });
+
+describe('attach button', () => {
+  /**
+   * @param {ChitUI} el
+   * @returns {HTMLInputElement | null}
+   */
+  const field = (el) =>
+    /** @type {HTMLInputElement | null} */ (el.shadowRoot?.querySelector('[part~="attach-input"]'));
+
+  /**
+   * @param {ChitUI} el
+   * @returns {HTMLButtonElement | null}
+   */
+  const button = (el) =>
+    /** @type {HTMLButtonElement | null} */ (
+      el.shadowRoot?.querySelector('[part~="attach-button"]')
+    );
+
+  /**
+   * Pick files the way a file dialog would.
+   *
+   * @param {HTMLInputElement} target
+   * @param {File[]} files
+   */
+  function pick(target, files) {
+    const data = new DataTransfer();
+    for (const file of files) data.items.add(file);
+    target.files = data.files;
+    target.dispatchEvent(new Event('change'));
+  }
+
+  it('is off until the theme asks for it', async () => {
+    const el = await opened();
+    expect(button(el)).to.equal(null);
+    expect(field(el)).to.equal(null);
+  });
+
+  it('accepts images and video by default', async () => {
+    const el = await opened();
+    el.theme = { open: { input: { attach: true } } };
+    await el.updateComplete;
+
+    expect(button(el)?.getAttribute('aria-label')).to.equal(el.currentLabels.attach);
+    const target = /** @type {HTMLInputElement} */ (field(el));
+    expect(target.getAttribute('accept')).to.equal('image/*,video/*');
+    expect(target.multiple).to.be.false;
+    // The button is the control; the field itself is out of the way.
+    expect(getComputedStyle(target).display).to.equal('none');
+    expect(target.getAttribute('tabindex')).to.equal('-1');
+  });
+
+  it('takes accept and multiple from the theme', async () => {
+    const el = await opened();
+    el.theme = { open: { input: { attach: true, accept: 'image/png', multiple: true } } };
+    await el.updateComplete;
+
+    const target = /** @type {HTMLInputElement} */ (field(el));
+    expect(target.getAttribute('accept')).to.equal('image/png');
+    expect(target.multiple).to.be.true;
+  });
+
+  it('reports what was picked and keeps nothing', async () => {
+    const el = await opened();
+    el.theme = { open: { input: { attach: true, multiple: true } } };
+    await el.updateComplete;
+
+    /** @type {File[][]} */
+    const seen = [];
+    el.addEventListener('chat-attach', (event) =>
+      seen.push(/** @type {CustomEvent} */ (event).detail.files),
+    );
+
+    const target = /** @type {HTMLInputElement} */ (field(el));
+    pick(target, [
+      new File(['x'], 'photo.png', { type: 'image/png' }),
+      new File(['y'], 'clip.mp4', { type: 'video/mp4' }),
+    ]);
+    await el.updateComplete;
+
+    expect(seen).to.have.length(1);
+    expect(seen[0].map((f) => f.name)).to.deep.equal(['photo.png', 'clip.mp4']);
+    // The widget adds nothing to the conversation: those files are not its to keep.
+    expect(el.messages).to.have.length(0);
+    // Cleared, so picking the same file again still reports it.
+    expect(target.value).to.equal('');
+  });
+
+  it('says nothing when the dialog is dismissed', async () => {
+    const el = await opened();
+    el.theme = { open: { input: { attach: true } } };
+    await el.updateComplete;
+
+    let fired = 0;
+    el.addEventListener('chat-attach', () => (fired += 1));
+    pick(/** @type {HTMLInputElement} */ (field(el)), []);
+    expect(fired).to.equal(0);
+  });
+
+  it('goes quiet while the widget is busy or locked', async () => {
+    const el = await opened({ busy: true });
+    el.theme = { open: { input: { attach: true } } };
+    await el.updateComplete;
+    expect(button(el)?.disabled).to.be.true;
+
+    el.busy = false;
+    el.inputDisabled = true;
+    await el.updateComplete;
+    expect(button(el)?.disabled).to.be.true;
+
+    el.inputDisabled = false;
+    await el.updateComplete;
+    expect(button(el)?.disabled).to.be.false;
+  });
+
+  it('can be opened from code', async () => {
+    const el = await opened();
+    el.theme = { open: { input: { attach: true } } };
+    await el.updateComplete;
+
+    const target = /** @type {HTMLInputElement} */ (field(el));
+    let opens = 0;
+    target.addEventListener('click', (event) => {
+      event.preventDefault();
+      opens += 1;
+    });
+
+    /** @type {HTMLButtonElement} */ (button(el)).click();
+    el.openAttach();
+    expect(opens).to.equal(2);
+  });
+});

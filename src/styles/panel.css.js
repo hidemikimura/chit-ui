@@ -76,18 +76,33 @@ export const panelStyles = css`
     color: var(--chit-color-header-text);
   }
 
+  /*
+   * The image and the title are one flex item. A slot is display: contents,
+   * so without this wrapper its children become items of the header itself
+   * and space-between pushes the image to one edge and the title to the
+   * middle, away from each other.
+   */
+  [part~='header-title'] {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5em;
+  }
+
   [part~='header-heading'] {
+    overflow: hidden;
     font-size: 1.05em;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   [part~='header-logo'] {
+    flex: none;
     width: 1.75em;
     height: 1.75em;
-    margin-inline-end: 0.5em;
     border-radius: 50%;
     object-fit: cover;
-    vertical-align: middle;
   }
 
   [part~='header-actions'] {
@@ -96,6 +111,7 @@ export const panelStyles = css`
     gap: 0.25em;
   }
 
+  [part~='home-button'],
   [part~='close-button'] {
     display: grid;
     place-items: center;
@@ -109,15 +125,18 @@ export const panelStyles = css`
     cursor: pointer;
   }
 
+  [part~='home-button']:hover,
   [part~='close-button']:hover {
     background: color-mix(in srgb, currentColor 10%, transparent);
   }
 
+  [part~='home-button']:focus-visible,
   [part~='close-button']:focus-visible {
     outline: 2px solid var(--chit-color-accent);
     outline-offset: 1px;
   }
 
+  [part~='home-button'] svg,
   [part~='close-button'] svg {
     width: 1.1em;
     height: 1.1em;

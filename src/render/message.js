@@ -45,6 +45,13 @@ export function renderMessage(host, message) {
 
   const meta = message.time || message.status;
 
+  // The theme says who is talking; a message overrides either half. `null` on
+  // the message hides what the theme set, which is how a run of replies shows
+  // the icon only on the first of them.
+  const speaker = host.currentTheme.open.speaker[message.role];
+  const avatar = message.avatar === undefined ? speaker.avatar : message.avatar;
+  const name = message.name === undefined ? speaker.name : message.name;
+
   return html`
     <article
       part="message message-${message.role}"
@@ -53,11 +60,13 @@ export function renderMessage(host, message) {
       ?data-streaming=${!!message.streaming}
       aria-busy=${message.streaming ? 'true' : 'false'}
     >
-      ${message.avatar
-        ? html`<img part="avatar" src=${message.avatar} alt="" loading="lazy" />`
-        : nothing}
+      ${avatar
+        ? html`<img part="avatar" src=${avatar} alt="" loading="lazy" />`
+        : speaker.avatar
+          ? html`<span part="avatar" data-placeholder aria-hidden="true"></span>`
+          : nothing}
       <div class="body">
-        ${message.name ? html`<span part="name">${message.name}</span>` : nothing}
+        ${name ? html`<span part="name">${name}</span>` : nothing}
         <div part="bubble">
           <div part="message-content" data-content=${contentField(message)}>${renderContent(host, message)}</div>
           ${message.streaming ? html`<span part="cursor" aria-hidden="true"></span>` : nothing}

@@ -52,6 +52,12 @@ npm install @hidemikimura/chit-ui lit
 import '@hidemikimura/chit-ui';        // <chit-ui> を登録する
 ```
 
+付属テーマは別のエントリから読み込みます（ウィジェット本体は付いてきません）。
+
+```js
+import { greenTheme } from '@hidemikimura/chit-ui/themes.js';
+```
+
 タグ名を自分で決めたい場合は、登録しないエントリを使います。
 
 ```js
@@ -97,7 +103,7 @@ chat.messages = [
 | 中身 | ○ | `text` / `html` / `template` / `element` / `component` のいずれか 1 つ |
 | `props` | | `component` に渡すプロパティ |
 | `time` | | ISO 文字列または `Date`。`formatTime` で表示を差し替えられます |
-| `name` / `avatar` | | 発言者名とアバター画像 URL |
+| `name` / `avatar` | | 発言者名とアイコン画像 URL。テーマの `open.speaker` より優先され、`null` でその発言だけ打ち消せます |
 | `status` | | `sending` / `sent` / `error` |
 | `streaming` | | `true` の間はカーソルを出し、スクロールを追従させます |
 | `meta` | | ライブラリは触りません。イベントでそのまま返ってきます |
@@ -206,6 +212,7 @@ chat.theme = {
   open: {
     width: 380, height: 600,
     colors: { accent: '#2563eb', userBubble: '#2563eb' },
+    bubble: { radius: 14, tail: 'none' },   // 吹き出しの角丸としっぽ
     header: { title: 'サポート' },
   },
 };
@@ -217,6 +224,184 @@ chat.theme = {
   場合、スマホは `pc` を引き継ぎつつサイズとオフセットだけ電話向けの既定値になります
 - スマホ幅では `open` は常に全画面です（`width` / `height` は無視されます）
 - 実行中に差し替えると即座に反映されます（ダークモードの切り替えなど）
+
+### 付属テーマ
+
+見た目を一から決めたくないときは、ライブラリ同梱のプリセットをそのまま渡せます。
+
+```js
+import { greenTheme } from '@hidemikimura/chit-ui/themes.js';
+
+chat.theme = greenTheme;
+```
+
+`greenTheme` は淡いブルーグレーの会話背景に、相手は白・自分は黄緑の吹き出し、しっぽは
+上向き、という緑系メッセンジャーの配色です。特定のサービスのロゴや素材は含みません。
+配色は Chit UI 独自のもので、読む必要のある文字と背景の組み合わせはすべて WCAG AA
+（4.5:1）を満たしています。テストが全プリセットのコントラストを毎回検証します。
+
+プリセットはただの `Theme` オブジェクトなので、上から重ねて調整できます。
+
+```js
+chat.theme = { ...greenTheme, open: { ...greenTheme.open, width: 420 } };
+```
+
+`<script>` 1 本で使っている場合は、バンドルから同じ名前で取り出せます。
+
+```js
+const { greenTheme } = window.ChitUI;   // IIFE 版
+```
+
+### タイトルバー
+
+`open.header` にタイトル文字列とロゴ画像を渡せます。
+
+```js
+chat.theme = {
+  open: {
+    header: { title: 'ecx サポート', logo: '/logo.png' },
+  },
+};
+```
+
+画像とタイトルは左側にひとまとまりで並び、右側に閉じるボタンが残ります。長いタイトルは
+省略記号で切り詰められるので、閉じるボタンが押し出されることはありません。`title` は
+`role="dialog"` の読み上げ名にも使われます（未指定なら「チャット」/「Chat」）。ロゴは
+装飾扱い（`alt=""`）です。隣にタイトルがあり、画像に読み上げ名を重ねても冗長なためです。
+
+バー全体を自分で描くなら `header-title` スロット、ボタンを足すなら `header-actions`
+スロット、まるごと差し替えるなら `header` スロットを使ってください。
+
+#### タイトルバーを消す
+
+`header.visible` を `false` にすると、タイトルバーごと出しません。LINE の LIFF のように
+外側のアプリが既にタイトルを持っている画面で、タイトルが二重に並ぶのを避けるための設定です。
+
+```js
+chat.theme = { open: { header: { visible: false } } };
+```
+
+会話はパネルの上端から始まります。`title` を書いておけば、表示はされなくても
+`role="dialog"` の読み上げ名としては使われるので、外側のタイトルと別の名前を付けられます。
+
+閉じるボタンもバーごと消える点にご注意ください。Esc とランチャーのクリックでは閉じられますし、
+LIFF のように外側が閉じる手段を持っているなら問題になりません。自前の閉じるボタンを置くなら
+`footer` スロットか、発言の中のボタンから `chat.close()` を呼んでください。
+
+#### ホームボタン
+
+`header.home` を `true` にすると、閉じるボタンの手前にホームボタンが出ます。シナリオ型の
+チャットで、会話を最初からやり直す入口を想定しています。
+
+```js
+chat.theme = { open: { header: { title: 'ecx サポート', home: true } } };
+
+chat.addEventListener('chat-home', (event) => {
+  chat.messages = scenarioStart;      // 巻き戻すのは利用者側
+  chat.typing = false;
+});
+```
+
+押されても**ウィジェットは何も消しません**。`chat-home`（`detail: { trigger }`）を出すだけです。
+`messages` の持ち主は利用者側なので、どこまで巻き戻すか、確認を挟むか、パネルを閉じるかは
+そちらで決められます。コードから同じ合図を出すなら `chat.home()` です（`trigger` は `'api'`）。
+
+見た目を変えるなら `::part(home-button)`、別のアイコンにしたいなら `header-actions` スロットに
+自前のボタンを置いてください（その場合 `home: false` のままで構いません）。読み上げ名は
+ロケールに応じて「最初に戻る」/「Back to the start」になります。
+
+### 添付ボタン
+
+`open.input.attach` を `true` にすると、入力欄の左に添付ボタンが出ます。押すとファイル選択が
+開き、選ばれたファイルは `chat-attach` で渡ってきます。
+
+```js
+chat.theme = {
+  open: {
+    input: {
+      attach: true,
+      accept: 'image/*,video/*',   // 既定。file input にそのまま渡ります
+      multiple: false,             // 既定
+    },
+  },
+};
+
+chat.addEventListener('chat-attach', (event) => {
+  for (const file of event.detail.files) upload(file);   // 送るのは利用者側
+});
+```
+
+ウィジェットがやるのは選ばせるところまでです。アップロードもプレビューも発言の追加もしません。
+`messages` の持ち主は利用者側で、バイト列の送り先もライブラリは知らないためです。選択後は
+file input を空に戻すので、同じファイルを続けて選んでも毎回イベントが出ます。ダイアログを
+閉じただけのときは何も起きません。
+
+`busy` と `inputDisabled` の間はボタンも無効になります。コードから開くなら
+`chat.openAttach()`、見た目を変えるなら `::part(attach-button)` です。自前の添付フローが
+あるなら `attach: false` のまま `input-before` スロットに自分のボタンを置いてください。
+
+### 発言者の名前とアイコン
+
+`open.speaker` に書いておくと、その側の発言すべてに名前とアイコンが出ます。発言ごとに
+書く必要はありません。
+
+```js
+chat.theme = {
+  open: {
+    speaker: {
+      assistant: { name: 'サポート', avatar: '/support.png' },
+      user:      { name: null,       avatar: null },          // 既定（何も出さない）
+    },
+  },
+};
+```
+
+発言側の指定が勝ちます。担当者ごとに顔を変えるなら発言に書いてください。
+
+```js
+chat.messages = [
+  { id: 'a', role: 'assistant', text: 'お待たせしました', name: '田中', avatar: '/tanaka.png' },
+];
+```
+
+`null` を渡すとその発言だけテーマの指定を打ち消せます。同じ人が続けて話すときに、
+2 件目以降のアイコンを省く使い方ができます。このときアイコンの場所は空けたまま残るので、
+吹き出しの左端は揃います。
+
+```js
+chat.messages = [
+  { id: 'a', role: 'assistant', text: '承知しました' },
+  { id: 'b', role: 'assistant', text: '少々お待ちください', avatar: null, name: null },
+];
+```
+
+`system` の発言は中央寄せの連絡行なので、名前もアイコンも出ません。会話の参加者ではなく
+ウィジェットが会話について述べている行、という位置づけのためです。
+
+### 吹き出しのしっぽ
+
+`open.bubble` で吹き出しの角丸としっぽを決めます。
+
+```js
+chat.theme = { open: { bubble: { radius: 18, tail: 'top' } } };
+```
+
+| 値 | 意味 |
+| --- | --- |
+| `tail: 'none'`（既定） | しっぽなし。話し手側の角だけ小さく落とした形になります |
+| `tail: 'top'` | 吹き出しの上寄りに三角のしっぽを付けます |
+| `tail: 'bottom'` | 下寄りに付けます |
+
+しっぽは話し手の側（相手は左、自分は右）に、その吹き出しと同じ色の葉のような形で描かれます。
+根元は吹き出しの内側に潜り込ませてあるので、継ぎ目は吹き出しの地色に隠れます。角丸はどの角も
+そのままで、角丸の値をいくつにしても隙間は出ません。付く高さは角丸に合わせて少し下げてあり、
+縁がまっすぐになったところに根元が乗ります。入力中インジケーターにも同じしっぽが付きます。
+
+しっぽを出すと、話し手側の角を落とす既定の形はなくなります。ひとつの吹き出しに話し手を示す印が
+ふたつあると読みにくいためです。
+
+しっぽの形は `clip-path: path()` で描いています。これに対応していないブラウザでは、変な形が
+はみ出すよりはと考えて、しっぽを出さず既定の吹き出しのままにしています。
 
 ### 閉じた状態を自分で描く
 
@@ -275,7 +460,7 @@ chit-ui {
 }
 ```
 
-公開しているカスタムプロパティは次の 32 個です。
+公開しているカスタムプロパティは次の 33 個です。
 
 色: `--chit-color-bg` `--chit-color-text` `--chit-color-accent` `--chit-color-border`
 `--chit-color-user-bg` `--chit-color-user-text` `--chit-color-assistant-bg`
@@ -286,6 +471,8 @@ chit-ui {
 ランチャー: `--chit-launcher-size` `--chit-launcher-radius` `--chit-launcher-offset-x`
 `--chit-launcher-offset-y` `--chit-launcher-bg` `--chit-launcher-text`
 `--chit-launcher-shadow` `--chit-launcher-image`
+
+吹き出し: `--chit-bubble-radius`
 
 パネル: `--chit-panel-width` `--chit-panel-height` `--chit-panel-radius`
 `--chit-panel-offset-x` `--chit-panel-offset-y` `--chit-panel-shadow`
@@ -331,6 +518,8 @@ chit-ui {
 | `focusInput()` / `clearInput()` | 入力欄の操作 |
 | `scrollToBottom({ smooth })` | 最新の発言までスクロール。`smooth` 省略時はテーマの設定に従う |
 | `getMessageElement(id)` | その発言のコンテナ DOM（未描画なら `null`） |
+| `home()` | `chat-home` を発火します（ホームボタンと同じ合図） |
+| `openAttach()` | 添付のファイル選択を開きます（添付ボタンと同じ） |
 
 ## イベント
 
@@ -349,6 +538,8 @@ chit-ui {
 | `chat-message-click` | 発言の中がクリックされた | `{ message, target, originalEvent }` | ○ |
 | `chat-scroll-top` | 一覧が最上部に達した | `{}` | |
 | `chat-breakpoint-change` | PC / スマホの判定が変わった | `{ device }` | |
+| `chat-home` | ホームボタンが押された（または `home()`） | `{ trigger }` | |
+| `chat-attach` | 添付ファイルが選ばれた | `{ files }`（`File[]`） | |
 
 `trigger` は `'user'`（クリックや Esc）か `'api'`（メソッドやプロパティ代入）です。
 
@@ -381,7 +572,8 @@ chat.addEventListener('chat-message-click', (event) => {
 
 `::part()` で外部からスタイルを当てられます。
 
-`launcher` `launcher-icon` `launcher-label` `panel` `header` `header-heading` `header-logo`
+`launcher` `launcher-icon` `launcher-label` `panel` `header` `header-title` `header-heading` `header-logo`
+`home-button` `attach-button` `attach-input`
 `header-actions` `close-button` `messages` `messages-inner` `message` `message-user`
 `message-assistant` `message-system` `bubble` `message-content` `avatar` `name` `meta` `time`
 `status` `cursor` `typing` `to-latest` `composer` `input` `counter` `send-button` `spinner`
@@ -403,6 +595,9 @@ chat.addEventListener('chat-message-click', (event) => {
 
 Chrome / Edge / Firefox / Safari の最新 2 バージョンと iOS Safari 16 以降。IE は非対応です。
 
+吹き出しのしっぽだけは `clip-path: path()` を使っています。対応していないブラウザでは
+しっぽを出さず、通常の吹き出しとして表示します（他の機能には影響しません）。
+
 ## 開発
 
 ```sh
@@ -422,18 +617,20 @@ IME の実挙動は合成イベントでは再現しきれないため、リリ�
 - macOS Safari + 日本語 IME: 変換確定の Enter で誤送信しないこと
 - iOS Safari: パネルが全画面になり、キーボード表示中も入力欄が隠れないこと
 - Android Chrome: 変換中の Enter で誤送信しないこと
+- iOS Safari / Android Chrome: 添付ボタンからカメラとフォトライブラリが開けること
+  （`accept` はブラウザによって扱いが違うため）
 
-## 公開
+### 公開
 
 ```sh
 npm login
-npm run check
-npm publish
+npm run check      # typecheck + test + axe 監査
+npm publish        # prepublishOnly がビルドとテストを流し直します
 ```
 
-`package.json` の `publishConfig.access` が `public` なので、`--access public` を付ける必要は
-ありません。スコープ付きパッケージは既定で非公開扱いになり、その場合 npm の無料プランでは
-`402 Payment Required` になります。
+`publishConfig` に `access: public` を入れてあるので `--access public` は不要です。
+公開したら `git tag v0.2.0 && git push --tags` を忘れずに。変更点は
+[CHANGELOG.md](./CHANGELOG.md) にまとめています。
 
 ## ライセンス
 

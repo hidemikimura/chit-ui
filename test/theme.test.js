@@ -4,6 +4,7 @@ import '../src/index.js';
 import { resolveTheme } from '../src/theme/merge-theme.js';
 import { themeToVariables } from '../src/theme/theme-to-css.js';
 import { defaultTheme } from '../src/theme/default-theme.js';
+import { greenTheme } from '../src/themes/index.js';
 
 /** @import { ChitUI } from '../src/chit-ui.js' */
 
@@ -163,24 +164,40 @@ describe('theme on the element', () => {
   });
 });
 
-describe('default palette', () => {
-  const { colors } = defaultTheme.open;
-  /** @type {[string, string, string][]} */
-  const pairs = [
-    ['body text', colors.text, colors.background],
-    ['header text', colors.headerText, colors.headerBackground],
-    ['own message', colors.userText, colors.userBubble],
-    ['their message', colors.assistantText, colors.assistantBubble],
-    ['system line', colors.systemText, colors.background],
-    ['input text', colors.inputText, colors.inputBackground],
-    ['placeholder', colors.inputPlaceholder, colors.inputBackground],
-    ['launcher', defaultTheme.closed.pc.colors.text, defaultTheme.closed.pc.colors.background],
-    ['accent on page', colors.accent, colors.background],
+describe('shipped palettes', () => {
+  /**
+   * Every theme the library ships has to clear WCAG AA on the pairs a reader
+   * actually has to read. A preset is a resolved theme here, so a preset that
+   * leaves a colour out is checked on the default it inherits.
+   *
+   * @type {[string, import('../src/types.js').Theme | undefined][]}
+   */
+  const themes = [
+    ['default', undefined],
+    ['green', greenTheme],
   ];
 
-  for (const [name, foreground, background] of pairs) {
-    it(`clears WCAG AA for ${name}`, () => {
-      expect(contrast(foreground, background)).to.be.at.least(4.5);
-    });
+  for (const [themeName, theme] of themes) {
+    const resolved = resolveTheme(theme, 'pc');
+    const { colors } = resolved.open;
+    /** @type {[string, string, string][]} */
+    const pairs = [
+      ['body text', colors.text, colors.background],
+      ['header text', colors.headerText, colors.headerBackground],
+      ['own message', colors.userText, colors.userBubble],
+      ['their message', colors.assistantText, colors.assistantBubble],
+      ['system line', colors.systemText, colors.background],
+      ['input text', colors.inputText, colors.inputBackground],
+      ['placeholder', colors.inputPlaceholder, colors.inputBackground],
+      ['launcher', resolved.closed.colors.text, resolved.closed.colors.background],
+      ['accent on page', colors.accent, colors.background],
+      ['send icon', '#ffffff', colors.accent],
+    ];
+
+    for (const [name, foreground, background] of pairs) {
+      it(`clears WCAG AA for ${name} (${themeName})`, () => {
+        expect(contrast(foreground, background)).to.be.at.least(4.5);
+      });
+    }
   }
 });

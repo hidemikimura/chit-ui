@@ -76,7 +76,12 @@ export function themeToVariables(theme) {
     '--chit-color-input-text': c.inputText,
     '--chit-color-input-placeholder': c.inputPlaceholder,
 
+    '--chit-bubble-radius': px(open.bubble.radius),
+
     '--_chit-input-max-rows': String(open.input.maxRows),
+    // Internal: the width the speaker's icon takes up, so the typing
+    // indicator lines up with the bubbles it belongs to.
+    '--_chit-speaker-gutter': open.speaker.assistant.avatar ? '2.5em' : '0px',
   };
 }
 

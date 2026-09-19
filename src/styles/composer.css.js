@@ -55,6 +55,45 @@ export const composerStyles = css`
     font-weight: 600;
   }
 
+  /* Out of sight, but still clickable from the button beside it. */
+  [part~='attach-input'] {
+    display: none;
+  }
+
+  [part~='attach-button'] {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.4em;
+    height: 2.4em;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--chit-color-system-text);
+    cursor: pointer;
+    transition: opacity 120ms ease;
+  }
+
+  [part~='attach-button'] svg {
+    width: 1.3em;
+    height: 1.3em;
+  }
+
+  [part~='attach-button']:hover:not(:disabled) {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  [part~='attach-button']:focus-visible {
+    outline: 2px solid var(--chit-color-accent);
+    outline-offset: 2px;
+  }
+
+  [part~='attach-button']:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
   [part~='send-button'] {
     display: grid;
     flex: none;

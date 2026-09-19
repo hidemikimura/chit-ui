@@ -11,6 +11,7 @@
  * @typedef {'pc' | 'mobile'} Device
  * @typedef {'fade' | 'scale' | 'slide' | 'none'} Effect
  * @typedef {'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'} Position
+ * @typedef {'none' | 'top' | 'bottom'} BubbleTail
  */
 
 /**
@@ -18,8 +19,8 @@
  * @property {string} id                       Unique within the array; used as the diffing key.
  * @property {Role} role
  * @property {string | Date} [time]
- * @property {string} [name]
- * @property {string} [avatar]
+ * @property {string | null} [name]           Overrides the theme's speaker name; null hides it.
+ * @property {string | null} [avatar]         Overrides the theme's speaker image; null hides it.
  * @property {MessageStatus} [status]
  * @property {boolean} [streaming]
  * @property {unknown} [meta]                  Never touched by the library.
@@ -58,6 +59,15 @@
  */
 
 /**
+ * Who is talking, as the theme describes them. A message that carries its own
+ * `name` or `avatar` wins; `null` on the message hides what the theme set.
+ *
+ * @typedef {Object} SpeakerTheme
+ * @property {string | null} [name]            Shown above the bubble.
+ * @property {string | null} [avatar]          Image URL for the speaker's icon.
+ */
+
+/**
  * @typedef {Object} OpenColors
  * @property {string} [background]
  * @property {string} [text]
@@ -84,11 +94,13 @@
  * @property {Offset} [offset]
  * @property {number} [radius]
  * @property {'hidden' | 'visible'} [launcher] Keep the launcher visible while open.
- * @property {{ title?: string | null, logo?: string | null, avatar?: string | null }} [header]
+ * @property {{ visible?: boolean, title?: string | null, logo?: string | null, home?: boolean }} [header]   The title bar: whether it is there at all, its text, its image, and whether it offers a way back to the start.
  * @property {{ image?: string | null }} [background]
  * @property {OpenColors} [colors]
+ * @property {{ radius?: number, tail?: BubbleTail }} [bubble]  Bubble corner radius, and where the tail points from.
+ * @property {{ assistant?: SpeakerTheme, user?: SpeakerTheme }} [speaker]  Default name and icon per side.
  * @property {Animation & { scroll?: 'smooth' | 'instant' }} [animation]
- * @property {{ maxRows?: number, placeholder?: string | null }} [input]
+ * @property {{ maxRows?: number, placeholder?: string | null, attach?: boolean, accept?: string, multiple?: boolean }} [input]   Composer: rows, placeholder, and the attach button.
  */
 
 /**
@@ -124,11 +136,13 @@
  * @property {{ x: number, y: number }} offset
  * @property {number} radius
  * @property {'hidden' | 'visible'} launcher
- * @property {{ title: string | null, logo: string | null, avatar: string | null }} header
+ * @property {{ visible: boolean, title: string | null, logo: string | null, home: boolean }} header
  * @property {{ image: string | null }} background
  * @property {Required<OpenColors>} colors
+ * @property {{ radius: number, tail: BubbleTail }} bubble
+ * @property {{ assistant: Required<SpeakerTheme>, user: Required<SpeakerTheme> }} speaker
  * @property {{ enter: Effect, exit: Effect, duration: number, scroll: 'smooth' | 'instant' }} animation
- * @property {{ maxRows: number, placeholder: string | null }} input
+ * @property {{ maxRows: number, placeholder: string | null, attach: boolean, accept: string, multiple: boolean }} input
  *
  * @typedef {Object} ResolvedTheme
  * @property {number} breakpoint

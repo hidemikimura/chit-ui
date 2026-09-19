@@ -387,6 +387,27 @@ export class ChitUI extends LitElement {
     else this.#composer.onCompositionEnd();
   }
 
+  /**
+   * Report files the reader picked with the attach button.
+   *
+   * Nothing is uploaded, previewed or added to the conversation here: the
+   * widget does not own `messages` and has nowhere to send bytes.
+   *
+   * @param {File[]} files
+   * @returns {void}
+   */
+  handleAttach(files) {
+    emit(this, Events.ATTACH, { files });
+  }
+
+  /** Open the file picker from code, as the attach button does. */
+  openAttach() {
+    const field = /** @type {HTMLInputElement | null} */ (
+      this.renderRoot.querySelector('[part~="attach-input"]')
+    );
+    field?.click();
+  }
+
   // --- internal ---------------------------------------------------------
 
   /**
@@ -443,6 +464,21 @@ export class ChitUI extends LitElement {
   }
 
   /**
+   * Ask to start the conversation over.
+   *
+   * The widget only announces it: `messages` belongs to the consumer, so
+   * clearing it, replaying a scenario or asking for confirmation first are all
+   * theirs to do. Cancelling the event is not offered for the same reason —
+   * there is nothing here to cancel.
+   *
+   * @param {Trigger} [trigger='api']
+   * @returns {void}
+   */
+  home(trigger = 'api') {
+    emit(this, Events.HOME, { trigger });
+  }
+
+  /**
    * @param {ChatState} to
    * @param {Trigger} trigger
    * @returns {Promise<boolean>}
@@ -493,6 +529,7 @@ export class ChitUI extends LitElement {
     this.dataset.launcherPosition = theme.closed.position;
     this.dataset.panelPosition = theme.open.position;
     this.dataset.idle = theme.closed.animation.idle;
+    this.dataset.bubbleTail = theme.open.bubble.tail;
   }
 
   /** @override */

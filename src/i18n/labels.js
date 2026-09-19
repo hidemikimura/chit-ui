@@ -6,7 +6,9 @@
  * @property {string} panel         Accessible name of the dialog.
  * @property {string} conversation  Accessible name of the message log.
  * @property {string} close         Close button.
+ * @property {string} home          Home button: back to the start of the conversation.
  * @property {string} send          Send button.
+ * @property {string} attach        Attach button beside the composer.
  * @property {string} input         Composer textarea.
  * @property {string} typing        Announced while the other side is typing.
  * @property {string} toLatest      "Jump to newest" button.
@@ -22,7 +24,9 @@ const BUILT_IN = {
     panel: 'チャット',
     conversation: '会話',
     close: 'チャットを閉じる',
+    home: '最初に戻る',
     send: '送信',
+    attach: '画像や動画を添付',
     input: 'メッセージを入力',
     typing: '入力中',
     toLatest: '最新へ',
@@ -35,7 +39,9 @@ const BUILT_IN = {
     panel: 'Chat',
     conversation: 'Conversation',
     close: 'Close chat',
+    home: 'Back to the start',
     send: 'Send',
+    attach: 'Attach an image or video',
     input: 'Type a message',
     typing: 'Typing',
     toLatest: 'Jump to latest',

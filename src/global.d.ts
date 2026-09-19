@@ -15,6 +15,8 @@ export interface ChitUIEventMap {
   'chat-message-click': CustomEvent<{ message: Message; target: Element; originalEvent: MouseEvent }>;
   'chat-scroll-top': CustomEvent<Record<string, never>>;
   'chat-breakpoint-change': CustomEvent<{ device: Device }>;
+  'chat-home': CustomEvent<{ trigger: Trigger }>;
+  'chat-attach': CustomEvent<{ files: File[] }>;
 }
 
 declare global {

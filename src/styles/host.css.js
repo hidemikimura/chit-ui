@@ -37,6 +37,8 @@ export const hostStyles = css`
     --chit-color-header-bg: #ffffff;
     --chit-color-header-text: #1f1f1f;
 
+    --chit-bubble-radius: 14px;
+
     position: fixed;
     inset: 0;
     z-index: var(--chit-z-index);

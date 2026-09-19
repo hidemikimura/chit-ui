@@ -95,6 +95,7 @@
       for (const name of [
         'chat-before-open', 'chat-open', 'chat-before-close', 'chat-close',
         'chat-hide', 'chat-show', 'chat-state-change', 'chat-breakpoint-change',
+        'chat-home',
       ]) {
         chat.addEventListener(name, (event) => {
           write(`${name} ${JSON.stringify(event.detail)}`);
@@ -114,6 +115,35 @@
         chat.addEventListener('chat-before-open', (e) => e.preventDefault(), { once: true });
       });
 
+      // シナリオ型の使い方: ホームボタンは合図を出すだけなので、巻き戻しはここで行う。
+      const scenarioStart = [
+        { id: 's1', role: 'assistant', text: 'ご用件を選んでください。' },
+        {
+          id: 's2',
+          role: 'assistant',
+          html: '<button data-action="delivery">配送について</button> '
+              + '<button data-action="receipt">領収証について</button>',
+        },
+      ];
+      // 添付は合図が来るだけなので、表示も送信も利用者側で組む。
+      chat.addEventListener('chat-attach', (event) => {
+        const files = event.detail.files;
+        write(`chat-attach ${files.map((f) => `${f.name} (${f.type || '不明'})`).join(', ')}`);
+        for (const file of files) {
+          const url = URL.createObjectURL(file);
+          const markup = file.type.startsWith('video/')
+            ? `<video src="${url}" controls playsinline style="max-width: 100%"></video>`
+            : `<img src="${url}" alt="${file.name}" style="max-width: 100%">`;
+          push({ role: 'user', html: markup, status: 'sent' });
+        }
+      });
+
+      chat.addEventListener('chat-home', () => {
+        chat.messages = scenarioStart;
+        chat.typing = false;
+        write('  → シナリオの最初に戻しました');
+      });
+
       document.getElementById('clear-log').addEventListener('click', () => {
         log.textContent = '';
       });
@@ -121,6 +151,7 @@
       const { fixtures } = await import('./fixtures.js');
       const { OrderCard } = await import('./order-card.js');
       const { PillLauncher } = await import('./pill-launcher.js');
+      const { greenTheme } = await import('../src/themes/index.js');
 
       let seq = 0;
       const push = (message) => {
@@ -263,6 +294,40 @@
 
       const presets = {
         '既定': {},
+        'グリーン（プリセット）': greenTheme,
+        'しっぽ・下': { open: { bubble: { radius: 18, tail: 'bottom' } } },
+        '発言者のアイコン': {
+          ...greenTheme,
+          open: {
+            ...greenTheme.open,
+            header: {
+              home: true,
+              title: 'ecx サポート',
+              logo:
+                'data:image/svg+xml;utf8,' +
+                encodeURIComponent(
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+                    '<rect width="64" height="64" rx="16" fill="#0a6b36"/>' +
+                    '<path d="M18 26h28M18 34h20" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' +
+                  '</svg>',
+                ),
+            },
+            input: { attach: true, multiple: true },
+            speaker: {
+              assistant: {
+                name: 'サポート',
+                avatar: 'data:image/svg+xml;utf8,' +
+            encodeURIComponent(
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">' +
+                '<rect width="64" height="64" rx="32" fill="#0a6b36"/>' +
+                '<circle cx="32" cy="25" r="11" fill="#fff"/>' +
+                '<path d="M9 60c4-13 12-19 23-19s19 6 23 19z" fill="#fff"/>' +
+              '</svg>',
+            ),
+              },
+            },
+          },
+        },
         'ダーク': {
           open: {
             colors: {
@@ -310,6 +375,20 @@
       };
 
       const themeBar = document.getElementById('themes');
+
+      // LIFF のように外側がタイトルを持つ場合を想定した切り替え。
+      const headerToggle = document.createElement('button');
+      headerToggle.textContent = 'タイトルバーの表示切り替え';
+      headerToggle.addEventListener('click', () => {
+        const visible = !chat.currentTheme.open.header.visible;
+        const theme = chat.theme ?? {};
+        chat.theme = {
+          ...theme,
+          open: { ...theme.open, header: { ...theme.open?.header, visible } },
+        };
+        write(`header.visible = ${visible}`);
+      });
+
       for (const [name, theme] of Object.entries(presets)) {
         const button = document.createElement('button');
         button.textContent = name;
@@ -319,6 +398,7 @@
         });
         themeBar.append(button);
       }
+      themeBar.append(headerToggle);
 
       write(`state: ${chat.state} / device: ${chat.device}`);
     </script>

@@ -15,6 +15,8 @@ export const Events = Object.freeze({
   MESSAGE_CLICK: 'chat-message-click',
   SCROLL_TOP: 'chat-scroll-top',
   BREAKPOINT_CHANGE: 'chat-breakpoint-change',
+  HOME: 'chat-home',
+  ATTACH: 'chat-attach',
 });
 
 /**

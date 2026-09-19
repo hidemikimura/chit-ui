@@ -15,7 +15,7 @@ import { renderComposer } from './composer.js';
 export function renderPanel(host) {
   const open = host.currentTheme.open;
   const labels = host.currentLabels;
-  const title = open.header?.title ?? labels.panel;
+  const title = open.header.title ?? labels.panel;
 
   return html`
     <section
@@ -26,16 +26,67 @@ export function renderPanel(host) {
       tabindex="-1"
       @keydown=${(/** @type {KeyboardEvent} */ event) => onKeydown(host, event)}
     >
+      ${open.header.visible ? renderHeader(host, title) : nothing}
+
+      ${renderMessageList(host)} ${renderComposer(host)}
+
+      <slot name="footer"></slot>
+    </section>
+  `;
+}
+
+/**
+ * The title bar.
+ *
+ * It can be left out entirely (`open.header.visible = false`), which is what a
+ * widget embedded in a host that already draws its own title bar wants — LINE
+ * LIFF, for one — rather than two stacked titles. The dialog keeps its
+ * accessible name either way: that name is read, not seen.
+ *
+ * Note that hiding it takes the close button with it. Esc and the launcher
+ * still close the panel, and the host's own chrome usually supplies the rest.
+ *
+ * @param {ChitUI} host
+ * @param {string} title
+ * @returns {import('lit').TemplateResult}
+ */
+function renderHeader(host, title) {
+  const open = host.currentTheme.open;
+  const labels = host.currentLabels;
+
+  return html`
       <header part="header">
         <slot name="header">
           <slot name="header-title">
-            ${open.header?.logo
-              ? html`<img part="header-logo" src=${open.header.logo} alt="" />`
-              : nothing}
-            <span part="header-heading">${title}</span>
+            <span part="header-title">
+              ${open.header.logo
+                ? html`<img part="header-logo" src=${open.header.logo} alt="" />`
+                : nothing}
+              <span part="header-heading">${title}</span>
+            </span>
           </slot>
           <span part="header-actions">
             <slot name="header-actions"></slot>
+            ${open.header.home
+              ? html`<button
+                  part="home-button"
+                  type="button"
+                  aria-label=${labels.home}
+                  title=${labels.home}
+                  @click=${() => host.home('user')}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                      d="M4 11.2 12 4l8 7.2M6.5 9.8V19h11V9.8M10 19v-4.6h4V19"
+                    />
+                  </svg>
+                </button>`
+              : nothing}
             <button
               part="close-button"
               type="button"
@@ -55,11 +106,6 @@ export function renderPanel(host) {
           </span>
         </slot>
       </header>
-
-      ${renderMessageList(host)} ${renderComposer(host)}
-
-      <slot name="footer"></slot>
-    </section>
   `;
 }
 

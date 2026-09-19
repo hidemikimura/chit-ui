@@ -72,7 +72,7 @@ export const defaultTheme = {
     offset: { x: 24, y: 24 },
     radius: 16,
     launcher: /** @type {const} */ ('hidden'),
-    header: { title: null, logo: null, avatar: null },
+    header: { visible: true, title: null, logo: null, home: false },
     background: { image: null },
     colors: {
       background: PALETTE.surface,
@@ -91,6 +91,16 @@ export const defaultTheme = {
       inputText: PALETTE.ink,
       inputPlaceholder: PALETTE.muted,
     },
+    // No tail by default: the squared-off corner on the speaker's side is
+    // enough to show who is talking, and a tail is a strong look to impose on
+    // a widget that has to sit in someone else's page.
+    bubble: { radius: 14, tail: /** @type {const} */ ('none') },
+    // Who is talking. Nothing by default: a widget that invents a name and a
+    // face for the consumer's support desk would be guessing.
+    speaker: {
+      assistant: { name: null, avatar: null },
+      user: { name: null, avatar: null },
+    },
     animation: {
       enter: /** @type {const} */ ('scale'),
       exit: /** @type {const} */ ('fade'),
@@ -100,7 +110,16 @@ export const defaultTheme = {
       // ScrollController for why.
       scroll: /** @type {const} */ ('smooth'),
     },
-    input: { maxRows: 5, placeholder: null },
+    // `attach` is off by default: a widget that offers to take files when
+    // nothing is listening for them would be promising something it cannot
+    // keep. `accept` and `multiple` go straight to the file input.
+    input: {
+      maxRows: 5,
+      placeholder: null,
+      attach: false,
+      accept: 'image/*,video/*',
+      multiple: false,
+    },
   },
   hidden: {
     animation: { exit: /** @type {const} */ ('fade'), duration: 150 },

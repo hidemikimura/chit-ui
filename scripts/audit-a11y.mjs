@@ -56,6 +56,39 @@ const STATES = {
     el.messages = [{ id: 'a', role: 'assistant', html: '<p>暗い配色です</p>' }];
     return el.open();
   },
+  'without a title bar': async (el) => {
+    const { greenTheme } = await import('/src/themes/index.js');
+    el.theme = {
+      ...greenTheme,
+      open: {
+        ...greenTheme.open,
+        animation: { enter: 'none', exit: 'none', duration: 0 },
+        header: { visible: false, title: 'ecx サポート' },
+      },
+    };
+    el.messages = [{ id: 'a', role: 'assistant', html: '<p>ご用件をどうぞ。</p>' }];
+    return el.open();
+  },
+  'green preset': async (el) => {
+    const { greenTheme } = await import('/src/themes/index.js');
+    el.theme = {
+      ...greenTheme,
+      open: {
+        ...greenTheme.open,
+        animation: { enter: 'none', exit: 'none', duration: 0 },
+        header: { title: 'ecx サポート', logo: '/demo/logo.svg', home: true },
+        speaker: { assistant: { name: 'サポート', avatar: '/demo/support.svg' } },
+        input: { attach: true },
+      },
+    };
+    el.messages = [
+      { id: 'a', role: 'assistant', html: '<p>ご用件をどうぞ。</p>', time: new Date() },
+      { id: 'b', role: 'user', html: '<p>領収証について</p>', status: 'sent' },
+      { id: 'c', role: 'system', html: '<p>オペレーターが参加しました</p>' },
+    ];
+    el.typing = true;
+    return el.open();
+  },
 };
 
 const server = await startDevServer({
