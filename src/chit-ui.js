@@ -9,6 +9,8 @@ import { ThemeController } from './controllers/theme-controller.js';
 import { ScrollController } from './controllers/scroll-controller.js';
 import { ComposerController } from './controllers/composer-controller.js';
 import { DragController } from './controllers/drag-controller.js';
+import { ScrollLockController } from './controllers/scroll-lock-controller.js';
+import { ViewportController } from './controllers/viewport-controller.js';
 import { renderLauncher } from './render/launcher.js';
 import { renderPanel } from './render/panel.js';
 import { resolveLabels, resolveLocale } from './i18n/labels.js';
@@ -180,6 +182,10 @@ export class ChitUI extends LitElement {
       behavior: () => this.currentTheme.open.animation.scroll,
     });
     this.#composer = new ComposerController(this);
+    // Both register themselves with the host and need nothing from us
+    // afterwards.
+    new ScrollLockController(this);
+    new ViewportController(this, { enabled: () => this.device === 'mobile' });
 
     this.#launcherDrag = new DragController(this, {
       name: 'launcher',

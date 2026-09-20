@@ -49,6 +49,13 @@ export class ScrollController {
   /** The first jump after the panel opens has nothing to animate from. */
   #openingJump = true;
 
+  /**
+   * The viewport's height as of the last reading. A scroll event that arrives
+   * with a different height is the box having been resized under the reader —
+   * a keyboard opening, say — and says nothing about where they chose to be.
+   */
+  #viewportHeight = 0;
+
   /** @type {string | undefined} */
   #lastId;
   #lastCount = 0;
@@ -127,16 +134,21 @@ export class ScrollController {
 
   #bind() {
     if (!this.#viewport) return;
+    this.#viewportHeight = this.#viewport.clientHeight;
     this.#viewport.addEventListener('scroll', this.#onScroll, { passive: true });
     // Precise end-of-scroll where it exists (Chrome 114, Firefox 109,
     // Safari 17.4); the timer below covers the rest.
     this.#viewport.addEventListener('scrollend', this.#onScrollEnd);
 
     // Images finishing and streamed text growing both change the height
-    // without a scroll event, so the follow has to react to size too.
+    // without a scroll event, so the follow has to react to size too. The
+    // viewport is watched alongside the content because a keyboard opening
+    // shortens the list without touching what is in it, and the newest
+    // message would otherwise slide out of sight.
     const inner = this.#viewport.firstElementChild;
     if (inner && typeof ResizeObserver !== 'undefined') {
       this.#resize = new ResizeObserver(() => {
+        this.#viewportHeight = this.#viewport?.clientHeight ?? 0;
         if (!this.#atBottom) return;
         // Content settling (an image loading, a tall block laying out) right
         // after a message arrived must not cut the follow short, so while our
@@ -147,6 +159,7 @@ export class ScrollController {
         this.#scrollNow({ behavior: this.#selfScrolling ? 'smooth' : 'instant' });
       });
       this.#resize.observe(inner);
+      this.#resize.observe(this.#viewport);
     }
   }
 
@@ -165,6 +178,13 @@ export class ScrollController {
   #onScroll = () => {
     const viewport = this.#viewport;
     if (!viewport) return;
+
+    // The box changed size under this scroll, so the reader did not move:
+    // the resize handler below puts them back where they were.
+    if (viewport.clientHeight !== this.#viewportHeight) {
+      this.#viewportHeight = viewport.clientHeight;
+      return;
+    }
 
     const distance = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
     const atBottom = distance <= BOTTOM_SLACK;

@@ -56,12 +56,18 @@ export const panelStyles = css`
    * A phone gets the whole screen. dvh rather than vh so the browser chrome
    * collapsing does not leave a gap, and the safe-area insets keep the header
    * clear of the notch.
+   *
+   * While a keyboard is up, the two --_chit-vv-* properties carry what is
+   * actually on screen (ViewportController fills them in from
+   * visualViewport); dvh knows nothing about a keyboard and would leave the
+   * composer behind it.
    */
   :host([data-device='mobile']) [part~='panel'],
   :host([data-device='mobile'][data-panel-position]) [part~='panel'] {
     inset: 0;
+    top: var(--_chit-vv-top, 0px);
     width: 100vw;
-    height: 100dvh;
+    height: var(--_chit-vv-height, 100dvh);
     max-width: none;
     max-height: none;
     border-radius: 0;

@@ -29,6 +29,24 @@ export const composerStyles = css`
     overflow-y: auto;
   }
 
+  /*
+   * iOS Safari zooms the page in whenever a field smaller than 16px takes
+   * focus, and it does not zoom back out when the field is done with — the
+   * reader is left with a widget wider than the screen and no obvious way
+   * back. Nothing in the page can undo that zoom short of pinning the
+   * viewport's scale, which would also take pinch-zoom away from everyone.
+   * So the field is kept at the size that never triggers it, and larger
+   * still if the theme's font is larger.
+   *
+   * Coarse pointers only: on a desktop the same rule would make the field
+   * stand out from the rest of the widget for no reason.
+   */
+  @media (pointer: coarse) {
+    [part~='input'] {
+      font-size: max(16px, 1em);
+    }
+  }
+
   [part~='input']::placeholder {
     color: var(--chit-color-input-placeholder);
   }
