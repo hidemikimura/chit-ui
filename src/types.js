@@ -52,10 +52,23 @@
  * @property {number} [radius]
  * @property {string | null} [image]           Icon image URL; null clears the default.
  * @property {string | null} [label]
+ * @property {boolean} [draggable]            Let the reader move it around the viewport.
  * @property {(new () => HTMLElement) | string | null} [component]  A component that draws the whole launcher.
  * @property {Record<string, unknown>} [props] Properties written to that component.
  * @property {{ background?: string, text?: string, shadow?: string }} [colors]
  * @property {Animation & { idle?: 'none' | 'pulse' | 'bounce' }} [animation]
+ */
+
+/**
+ * The wait between sending and the answer arriving.
+ *
+ * @typedef {'dots' | 'spinner' | 'text'} LoadingStyle
+ *
+ * @typedef {Object} LoadingTheme
+ * @property {boolean} [auto]        Show it from `chat-submit` until the next message from the other side.
+ * @property {LoadingStyle} [style]  What it looks like.
+ * @property {string | null} [text]  Wording beside the animation, or on its own for `'text'`.
+ * @property {number} [timeout]      ms after which it gives up on its own; 0 leaves it to the consumer.
  */
 
 /**
@@ -94,11 +107,13 @@
  * @property {Offset} [offset]
  * @property {number} [radius]
  * @property {'hidden' | 'visible'} [launcher] Keep the launcher visible while open.
+ * @property {boolean} [draggable]             Let the reader move the panel by its title bar.
  * @property {{ visible?: boolean, title?: string | null, logo?: string | null, home?: boolean }} [header]   The title bar: whether it is there at all, its text, its image, and whether it offers a way back to the start.
  * @property {{ image?: string | null }} [background]
  * @property {OpenColors} [colors]
  * @property {{ radius?: number, tail?: BubbleTail }} [bubble]  Bubble corner radius, and where the tail points from.
  * @property {{ assistant?: SpeakerTheme, user?: SpeakerTheme }} [speaker]  Default name and icon per side.
+ * @property {LoadingTheme} [loading]      The wait for an answer.
  * @property {Animation & { scroll?: 'smooth' | 'instant' }} [animation]
  * @property {{ maxRows?: number, placeholder?: string | null, attach?: boolean, accept?: string, multiple?: boolean }} [input]   Composer: rows, placeholder, and the attach button.
  */
@@ -122,6 +137,7 @@
  * @property {Position} position
  * @property {{ x: number, y: number }} offset
  * @property {number} radius
+ * @property {boolean} draggable
  * @property {string | null} image
  * @property {string | null} label
  * @property {(new () => HTMLElement) | string | null} component
@@ -136,11 +152,13 @@
  * @property {{ x: number, y: number }} offset
  * @property {number} radius
  * @property {'hidden' | 'visible'} launcher
+ * @property {boolean} draggable
  * @property {{ visible: boolean, title: string | null, logo: string | null, home: boolean }} header
  * @property {{ image: string | null }} background
  * @property {Required<OpenColors>} colors
  * @property {{ radius: number, tail: BubbleTail }} bubble
  * @property {{ assistant: Required<SpeakerTheme>, user: Required<SpeakerTheme> }} speaker
+ * @property {Required<LoadingTheme>} loading
  * @property {{ enter: Effect, exit: Effect, duration: number, scroll: 'smooth' | 'instant' }} animation
  * @property {{ maxRows: number, placeholder: string | null, attach: boolean, accept: string, multiple: boolean }} input
  *

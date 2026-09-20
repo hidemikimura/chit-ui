@@ -152,6 +152,7 @@ export class ComposerController {
     if (!allowed) return false;
 
     this.clear();
+    this.#host.handleSubmitted();
     return true;
   }
 
@@ -212,4 +213,5 @@ export class ComposerController {
  * @property {boolean} sendOnEnter
  * @property {number | undefined} maxLength
  * @property {import('../i18n/labels.js').Labels} currentLabels
+ * @property {() => void} handleSubmitted  Called after a submit that no listener cancelled.
  */

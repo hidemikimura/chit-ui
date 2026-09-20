@@ -17,6 +17,7 @@ export const Events = Object.freeze({
   BREAKPOINT_CHANGE: 'chat-breakpoint-change',
   HOME: 'chat-home',
   ATTACH: 'chat-attach',
+  MOVE: 'chat-move',
 });
 
 /**

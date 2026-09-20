@@ -23,6 +23,19 @@ export const launcherStyles = css`
     transition: filter 120ms ease;
   }
 
+  /*
+   * A draggable launcher takes the touch gestures for itself, so a finger on
+   * it moves the button instead of scrolling the page behind it.
+   */
+  [part~='launcher'][data-draggable] {
+    cursor: grab;
+    touch-action: none;
+  }
+
+  [part~='launcher'][data-draggable]:active {
+    cursor: grabbing;
+  }
+
   /* The image comes from the theme, so it is a background rather than an <img>. */
   [part~='launcher'][data-has-image] {
     background-image: var(--chit-launcher-image);

@@ -8,8 +8,14 @@ export const panelStyles = css`
     flex-direction: column;
     width: var(--chit-panel-width);
     height: var(--chit-panel-height);
-    max-width: calc(100vw - var(--chit-panel-offset-x) * 2);
-    max-height: calc(100vh - var(--chit-panel-offset-y) * 2);
+    /*
+     * The room left between the panel's own corner and the far edge. Doubling
+     * the offset instead would assume the panel is centred between two equal
+     * gaps, which stops being true the moment it is dragged: moving it up
+     * would have made it shorter on the way.
+     */
+    max-width: calc(100vw - var(--chit-panel-offset-x) - 8px);
+    max-height: calc(100vh - var(--chit-panel-offset-y) - 8px);
     overflow: hidden;
     border-radius: var(--chit-panel-radius);
     background-color: var(--chit-color-bg);
@@ -82,6 +88,21 @@ export const panelStyles = css`
    * and space-between pushes the image to one edge and the title to the
    * middle, away from each other.
    */
+  [part~='header'][data-draggable] {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  [part~='header'][data-draggable]:active {
+    cursor: grabbing;
+  }
+
+  [part~='header'][data-draggable]:focus-visible {
+    outline: 2px solid var(--chit-color-accent);
+    outline-offset: -2px;
+  }
+
   [part~='header-title'] {
     display: inline-flex;
     min-width: 0;

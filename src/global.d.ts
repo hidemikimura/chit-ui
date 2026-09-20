@@ -1,5 +1,5 @@
 import type { ChitUI } from './chit-ui.js';
-import type { Message, ChatState, Trigger, Device } from './types.js';
+import type { Message, ChatState, Trigger, Device, Position } from './types.js';
 
 export interface ChitUIEventMap {
   'chat-submit': CustomEvent<{ text: string }>;
@@ -17,6 +17,12 @@ export interface ChitUIEventMap {
   'chat-breakpoint-change': CustomEvent<{ device: Device }>;
   'chat-home': CustomEvent<{ trigger: Trigger }>;
   'chat-attach': CustomEvent<{ files: File[] }>;
+  'chat-move': CustomEvent<{
+    target: 'launcher' | 'panel';
+    position: Position;
+    offset: { x: number; y: number };
+    displacement: { x: number; y: number };
+  }>;
 }
 
 declare global {

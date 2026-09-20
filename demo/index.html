@@ -56,6 +56,7 @@
         <button id="say-hello">会話を流し込む</button>
         <button id="stream">ストリーミング</button>
         <button id="typing">入力中の切り替え</button>
+        <button id="loading">ローディングの切り替え</button>
         <button id="component">コンポーネント発言</button>
         <button id="bulk">30 件追加</button>
         <button id="limit">文字数制限 20 の切り替え</button>
@@ -95,7 +96,7 @@
       for (const name of [
         'chat-before-open', 'chat-open', 'chat-before-close', 'chat-close',
         'chat-hide', 'chat-show', 'chat-state-change', 'chat-breakpoint-change',
-        'chat-home',
+        'chat-home', 'chat-move',
       ]) {
         chat.addEventListener(name, (event) => {
           write(`${name} ${JSON.stringify(event.detail)}`);
@@ -186,6 +187,11 @@
         const rest = chat.messages.filter((m) => m.id !== id);
         chat.messages = [...rest, { id, role: 'assistant', html: `<p>${text}</p>`, time: new Date() }];
         chat.busy = false;
+      });
+
+      document.getElementById('loading').addEventListener('click', () => {
+        chat.loading = !chat.loading;
+        write(`loading = ${chat.loading}`);
       });
 
       document.getElementById('typing').addEventListener('click', () => {
@@ -296,6 +302,10 @@
         '既定': {},
         'グリーン（プリセット）': greenTheme,
         'しっぽ・下': { open: { bubble: { radius: 18, tail: 'bottom' } } },
+        'ドラッグ可': {
+          closed: { draggable: true },
+          open: { draggable: true, header: { title: 'ドラッグで移動できます' } },
+        },
         '発言者のアイコン': {
           ...greenTheme,
           open: {
@@ -313,6 +323,7 @@
                 ),
             },
             input: { attach: true, multiple: true },
+            loading: { auto: true, style: 'spinner', text: '回答を作成しています', timeout: 8000 },
             speaker: {
               assistant: {
                 name: 'サポート',
@@ -399,6 +410,14 @@
         themeBar.append(button);
       }
       themeBar.append(headerToggle);
+
+      const resetPosition = document.createElement('button');
+      resetPosition.textContent = '位置を戻す';
+      resetPosition.addEventListener('click', () => {
+        chat.resetPosition();
+        write('resetPosition()');
+      });
+      themeBar.append(resetPosition);
 
       write(`state: ${chat.state} / device: ${chat.device}`);
     </script>

@@ -102,7 +102,8 @@ export const messageStyles = css`
    */
 
   [part~='bubble']::after,
-  [part~='typing']::after {
+  [part~='typing']::after,
+  [part~='loading']::after {
     content: '';
     display: none;
     position: absolute;
@@ -118,9 +119,11 @@ export const messageStyles = css`
    */
   @supports (clip-path: path('M 0 0 Z')) {
     :host([data-bubble-tail='top']) [part~='bubble']::after,
-    :host([data-bubble-tail='bottom']) [part~='bubble']::after,
     :host([data-bubble-tail='top']) [part~='typing']::after,
-    :host([data-bubble-tail='bottom']) [part~='typing']::after {
+    :host([data-bubble-tail='top']) [part~='loading']::after,
+    :host([data-bubble-tail='bottom']) [part~='bubble']::after,
+    :host([data-bubble-tail='bottom']) [part~='typing']::after,
+    :host([data-bubble-tail='bottom']) [part~='loading']::after {
       display: block;
     }
 
@@ -129,15 +132,18 @@ export const messageStyles = css`
      * bubble carries one cue about who is talking, not two.
      */
     :host([data-bubble-tail='top']) [part~='bubble'],
-    :host([data-bubble-tail='bottom']) [part~='bubble'],
     :host([data-bubble-tail='top']) [part~='typing'],
-    :host([data-bubble-tail='bottom']) [part~='typing'] {
+    :host([data-bubble-tail='top']) [part~='loading'],
+    :host([data-bubble-tail='bottom']) [part~='bubble'],
+    :host([data-bubble-tail='bottom']) [part~='typing'],
+    :host([data-bubble-tail='bottom']) [part~='loading'] {
       border-radius: var(--chit-bubble-radius);
     }
 
     /* Their side: the leaf points left, its root inside the bubble. */
     :host([data-bubble-tail]) [part~='message-assistant'] [part~='bubble']::after,
-    :host([data-bubble-tail]) [part~='typing']::after {
+    :host([data-bubble-tail]) [part~='typing']::after,
+    :host([data-bubble-tail]) [part~='loading']::after {
       right: calc(100% - var(--_chit-tail-root));
       background: var(--chit-color-assistant-bg);
     }
@@ -150,17 +156,20 @@ export const messageStyles = css`
     }
 
     :host([data-bubble-tail='top']) [part~='bubble']::after,
-    :host([data-bubble-tail='top']) [part~='typing']::after {
+    :host([data-bubble-tail='top']) [part~='typing']::after,
+    :host([data-bubble-tail='top']) [part~='loading']::after {
       top: var(--_chit-tail-offset);
     }
 
     :host([data-bubble-tail='bottom']) [part~='bubble']::after,
-    :host([data-bubble-tail='bottom']) [part~='typing']::after {
+    :host([data-bubble-tail='bottom']) [part~='typing']::after,
+    :host([data-bubble-tail='bottom']) [part~='loading']::after {
       bottom: var(--_chit-tail-offset);
     }
 
     :host([data-bubble-tail='bottom']) [part~='message-assistant'] [part~='bubble']::after,
-    :host([data-bubble-tail='bottom']) [part~='typing']::after {
+    :host([data-bubble-tail='bottom']) [part~='typing']::after,
+    :host([data-bubble-tail='bottom']) [part~='loading']::after {
       transform: scaleY(-1);
     }
 
@@ -228,24 +237,57 @@ export const messageStyles = css`
     }
   }
 
-  [part~='typing'] {
+  [part~='typing'],
+  [part~='loading'] {
     position: relative;
     align-self: flex-start;
     /* Indented past the speaker's icon, when the theme gives them one. */
     margin-inline-start: var(--_chit-speaker-gutter, 0px);
     padding: 0.7em 0.9em;
+    /*
+     * Stated rather than left to the font's idea of "normal", so that both
+     * indicators are the same height whatever the page's typeface does, and
+     * so the spinner has a line box it is known to fit inside.
+     */
+    line-height: 1.5;
     border-radius: var(--chit-bubble-radius);
     border-bottom-left-radius: 4px;
     background: var(--chit-color-assistant-bg);
     color: var(--chit-color-assistant-text);
   }
 
-  [part~='typing'] .dots {
+  /*
+   * The wait is laid out inline, like the typing bubble it stands in for. A
+   * flex box has no line box of its own, so dots or a spinner alone would sit
+   * in a noticeably shorter bubble than one holding a line of text.
+   */
+  [part~='loading'] > * + * {
+    margin-inline-start: 0.5em;
+  }
+
+  [part~='loading'] [part~='spinner'] {
+    display: inline-block;
+    /*
+     * Centred on the line rather than sitting on the baseline: at 1.1em it
+     * then fits inside the line box the text would have made on its own, so
+     * a spinner bubble is exactly as tall as a typing bubble.
+     */
+    vertical-align: middle;
+    color: var(--chit-color-system-text);
+  }
+
+  [part~='loading-text'] {
+    font-size: 0.9em;
+  }
+
+  [part~='typing'] .dots,
+  [part~='loading'] .dots {
     display: inline-flex;
     gap: 0.25em;
   }
 
-  [part~='typing'] .dots i {
+  [part~='typing'] .dots i,
+  [part~='loading'] .dots i {
     width: 0.4em;
     height: 0.4em;
     border-radius: 50%;
@@ -254,10 +296,12 @@ export const messageStyles = css`
     animation: chit-typing 1.2s ease-in-out infinite;
   }
 
-  [part~='typing'] .dots i:nth-child(2) {
+  [part~='typing'] .dots i:nth-child(2),
+  [part~='loading'] .dots i:nth-child(2) {
     animation-delay: 0.15s;
   }
-  [part~='typing'] .dots i:nth-child(3) {
+  [part~='typing'] .dots i:nth-child(3),
+  [part~='loading'] .dots i:nth-child(3) {
     animation-delay: 0.3s;
   }
 
@@ -299,7 +343,8 @@ export const messageStyles = css`
 
   @media (prefers-reduced-motion: reduce) {
     [part~='cursor'],
-    [part~='typing'] .dots i {
+    [part~='typing'] .dots i,
+  [part~='loading'] .dots i {
       animation: none;
     }
   }

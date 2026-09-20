@@ -11,6 +11,8 @@
  * @property {string} attach        Attach button beside the composer.
  * @property {string} input         Composer textarea.
  * @property {string} typing        Announced while the other side is typing.
+ * @property {string} loading       Announced while waiting for an answer.
+ * @property {string} move          The panel's drag handle.
  * @property {string} toLatest      "Jump to newest" button.
  * @property {{ sending: string, sent: string, error: string }} status  Delivery state of one's own message.
  * @property {string} charactersLeft  Counter, with {n} for the number remaining.
@@ -29,6 +31,8 @@ const BUILT_IN = {
     attach: '画像や動画を添付',
     input: 'メッセージを入力',
     typing: '入力中',
+    loading: '応答を待っています',
+    move: 'チャットの位置を移動（矢印キー）',
     toLatest: '最新へ',
     status: { sending: '送信中', sent: '送信済み', error: '送信できませんでした' },
     charactersLeft: '残り {n} 文字',
@@ -44,6 +48,8 @@ const BUILT_IN = {
     attach: 'Attach an image or video',
     input: 'Type a message',
     typing: 'Typing',
+    loading: 'Waiting for a reply',
+    move: 'Move the chat (arrow keys)',
     toLatest: 'Jump to latest',
     status: { sending: 'Sending', sent: 'Sent', error: 'Not delivered' },
     charactersLeft: '{n} characters left',

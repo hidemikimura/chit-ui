@@ -53,9 +53,25 @@ export function renderPanel(host) {
 function renderHeader(host, title) {
   const open = host.currentTheme.open;
   const labels = host.currentLabels;
+  const draggable = open.draggable && host.device === 'pc';
 
   return html`
-      <header part="header">
+      <header
+        part="header"
+        ?data-draggable=${draggable}
+        tabindex=${draggable ? '0' : nothing}
+        aria-label=${draggable ? labels.move : nothing}
+        @pointerdown=${(/** @type {PointerEvent} */ event) => {
+          // Only the bar itself is a handle: a drag that starts on the close
+          // button would swallow the click that closes the panel.
+          if (/** @type {HTMLElement} */ (event.target).closest('button')) return;
+          host.panelDrag.start(event);
+        }}
+        @keydown=${(/** @type {KeyboardEvent} */ event) => {
+          if (event.target !== event.currentTarget) return;
+          host.panelDrag.nudge(event);
+        }}
+      >
         <slot name="header">
           <slot name="header-title">
             <span part="header-title">

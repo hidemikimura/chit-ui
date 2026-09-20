@@ -310,6 +310,107 @@ chat.addEventListener('chat-home', (event) => {
 自前のボタンを置いてください（その場合 `home: false` のままで構いません）。読み上げ名は
 ロケールに応じて「最初に戻る」/「Back to the start」になります。
 
+### ドラッグで動かす
+
+ランチャー（閉じた状態）と、開いた状態のパネルを、読み手が動かせるようにできます。
+どちらも既定は無効です。
+
+```js
+chat.theme = {
+  closed: { draggable: true },   // ランチャーをドラッグ
+  open:   { draggable: true },   // パネルをタイトルバーでドラッグ
+};
+```
+
+パネルの取っ手はタイトルバーです。バーの中のボタン（閉じる・ホーム）を押したときはドラッグに
+なりません。タイトルバーを消している（`header.visible: false`）ときは掴む場所がないので
+動かせません。スマホ幅ではパネルは全画面なので、パネルのドラッグは自動的に無効になります
+（ランチャーは動かせます）。
+
+矢印キーでも動かせます。ランチャーかタイトルバーにフォーカスして、矢印キーで 8px、
+Shift と一緒なら 32px ずつです。ポインタが使えない人でも同じことができるようにするためで、
+そのためタイトルバーは `draggable` のときだけフォーカスを受けます。
+
+画面の外には出られません。端から 8px のところで止まります。ウィンドウの大きさが変わったときも
+中に収まるように置き直します。
+
+#### 閉じた状態と開いた状態は一緒に動きます
+
+ドラッグが動かすのは「位置」ではなく「テーマの位置からどれだけずらしたか」（画面上の px）で、
+このずれをウィジェット全体でひとつだけ持っています。そのため、
+
+- ランチャーを動かしてから開くと、パネルも同じだけずれた位置に出ます
+- パネルを動かしてから閉じると、ランチャーも同じだけずれた位置に戻ります
+
+ランチャーとパネルは同じウィジェットの 2 つの姿なので、片方だけ元の場所に残るほうが不自然だと
+考えてこうしています。それぞれの角（`closed.position` / `open.position`）や余白の違いは
+そのまま保たれ、ずれだけが共有されます。
+
+#### 動かした位置を覚える
+
+ずれは `dragOffset` で読み書きできます。ページを開いている間だけ保持され、離したときに
+`chat-move` が出ます。保存と復元は利用者側の仕事です（`localStorage` に入れるかどうかは
+サイトの方針なので、ライブラリは決めません）。
+
+```js
+chat.addEventListener('chat-move', (event) => {
+  const { target, position, offset, displacement } = event.detail;
+  localStorage.setItem('chit-position', JSON.stringify(displacement));
+});
+
+// 復元はずれを戻すだけ（閉じた状態・開いた状態の両方に効きます）
+chat.dragOffset = JSON.parse(localStorage.getItem('chit-position') ?? 'null');
+```
+
+`displacement` が共有しているずれ、`offset` は実際に落ち着いた位置で、テーマと同じ意味
+（`position` が指す角からの距離）です。`target` はどちらを掴んで動かしたかです。
+`chat.resetPosition()`（= `chat.dragOffset = null`）でテーマの位置に戻ります。
+
+動かしている間の位置は要素のインラインスタイルとして書かれるので、テーマよりもページ側の CSS
+よりも優先されます。読み手が自分で動かした結果が、いちばん具体的な指定だからです。
+
+### 応答待ちのローディング
+
+送信してから返事が届くまでの間に出す表示です。`loading` プロパティで切り替えます。
+
+```js
+chat.loading = true;
+// …サーバーとやり取り…
+chat.loading = false;
+```
+
+`open.loading` で見た目を決めます。既定はスピナーです。入力中インジケーターと同じ三点ドットだと
+「誰かが書いている」という意味になってしまい、サーバーの応答待ちとは違うためです。相手が人間の
+オペレーターなら `'dots'` を選べます。
+
+```js
+chat.theme = {
+  open: {
+    loading: {
+      auto: true,                      // 送信から次の発言まで自動で出す（既定 false）
+      style: 'spinner',                // 'spinner'（既定）/ 'dots' / 'text'
+      text: '回答を作成しています',      // 省略すると読み上げ名だけに使われます
+      timeout: 8000,                   // ms。0（既定）なら自分で消します
+    },
+  },
+};
+```
+
+`auto: true` にすると、`chat-submit` が出た時点で表示し、相手側（`assistant` か `system`）の
+発言が `messages` に増えた時点で消します。自分の発言を積んでも消えません。ストリーミングの
+場合は空の吹き出しが現れた時点で消えます。送信をキャンセル（`preventDefault`）したときは
+そもそも出ません。`timeout` を過ぎたら黙って引っ込むので、通信が返ってこないまま残り続ける
+ことはありません。`chat.loading = false` でいつでも手で消せます。
+
+入力中インジケーター（`typing`）と同じ位置に出ます。**この 2 つは同時には立ちません。**
+`loading` を `true` にすると `typing` は `false` になり、その逆も同じです。どちらも会話の
+同じ「間」を指していて（片方は人が書いている、もう片方はサーバーがまだ答えていない）、
+2 つ並ぶと読み手に違いを考えさせてしまうためです。片方を `false` にしてももう片方は
+そのままです。同じタイミングで両方に `true` を入れた場合は、後から書いたほうが残ります。
+
+入力欄をロックするかどうかは別の話なので、必要なら `busy` も合わせて立ててください。
+`loading` は属性にも反映されるので、ページ側の CSS から `chit-ui[loading]` で拾えます。
+
 ### 添付ボタン
 
 `open.input.attach` を `true` にすると、入力欄の左に添付ボタンが出ます。押すとファイル選択が
@@ -492,7 +593,8 @@ chit-ui {
 | `state` | `'closed' \| 'open' \| 'hidden'` | `'closed'` | 現在の状態 |
 | `theme` | `Theme` | `{}` | テーマ（部分指定可） |
 | `messages` | `Message[]` | `[]` | 描画する発言 |
-| `typing` | `boolean \| { html }` | `false` | 相手が入力中の表示 |
+| `typing` | `boolean \| { html }` | `false` | 相手が入力中の表示。`loading` とは排他です |
+| `loading` | `boolean` | `false` | 応答待ちの表示。`typing` とは排他で、`open.loading.auto` なら自動で切り替わります |
 | `busy` | `boolean` | `false` | 送信中。入力をロックします |
 | `inputDisabled` / `inputHidden` | `boolean` | `false` | 入力欄の無効化 / 非表示 |
 | `value` | `string` | `''` | 入力欄の内容 |
@@ -505,6 +607,8 @@ chit-ui {
 | `messageStyles` | `string` | `''` | 発言の中に適用する追加 CSS |
 | `locale` | `string` | `<html lang>` | ラベルと時刻の言語 |
 | `labels` | `Partial<Labels>` | なし | UI 文字列の上書き |
+
+`dragOffset`（`{ x, y } | null`）はドラッグで生じたずれです。読み書きできます。
 
 読み取り専用: `renderedState`、`device`（`'pc' \| 'mobile'`）、`hasUnseen`、`canSend`、
 `currentTheme`、`currentLabels`、`resolvedLocale`。
@@ -520,6 +624,7 @@ chit-ui {
 | `getMessageElement(id)` | その発言のコンテナ DOM（未描画なら `null`） |
 | `home()` | `chat-home` を発火します（ホームボタンと同じ合図） |
 | `openAttach()` | 添付のファイル選択を開きます（添付ボタンと同じ） |
+| `resetPosition()` | ドラッグで動かした位置を忘れ、テーマの位置に戻します |
 
 ## イベント
 
@@ -540,6 +645,7 @@ chit-ui {
 | `chat-breakpoint-change` | PC / スマホの判定が変わった | `{ device }` | |
 | `chat-home` | ホームボタンが押された（または `home()`） | `{ trigger }` | |
 | `chat-attach` | 添付ファイルが選ばれた | `{ files }`（`File[]`） | |
+| `chat-move` | ドラッグまたは矢印キーで動かされた | `{ target, position, offset, displacement }` | |
 
 `trigger` は `'user'`（クリックや Esc）か `'api'`（メソッドやプロパティ代入）です。
 
@@ -576,7 +682,7 @@ chat.addEventListener('chat-message-click', (event) => {
 `home-button` `attach-button` `attach-input`
 `header-actions` `close-button` `messages` `messages-inner` `message` `message-user`
 `message-assistant` `message-system` `bubble` `message-content` `avatar` `name` `meta` `time`
-`status` `cursor` `typing` `to-latest` `composer` `input` `counter` `send-button` `spinner`
+`status` `cursor` `typing` `loading` `loading-text` `to-latest` `composer` `input` `counter` `send-button` `spinner`
 
 パーツ名・プロパティ名・イベント名・スロット名・CSS カスタムプロパティ名は公開 API として
 扱い、変更はメジャーバージョンでのみ行います。

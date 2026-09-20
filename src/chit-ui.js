@@ -8,6 +8,7 @@ import { BreakpointController } from './controllers/breakpoint-controller.js';
 import { ThemeController } from './controllers/theme-controller.js';
 import { ScrollController } from './controllers/scroll-controller.js';
 import { ComposerController } from './controllers/composer-controller.js';
+import { DragController } from './controllers/drag-controller.js';
 import { renderLauncher } from './render/launcher.js';
 import { renderPanel } from './render/panel.js';
 import { resolveLabels, resolveLocale } from './i18n/labels.js';
@@ -56,7 +57,8 @@ export class ChitUI extends LitElement {
     state: { type: String, reflect: true, noAccessor: true },
     theme: { type: Object },
     messages: { type: Array },
-    typing: { type: Object },
+    typing: { type: Object, noAccessor: true },
+    loading: { type: Boolean, reflect: true, noAccessor: true },
     busy: { type: Boolean, reflect: true },
     inputDisabled: { type: Boolean, reflect: true, attribute: 'input-disabled' },
     inputHidden: { type: Boolean, reflect: true, attribute: 'input-hidden' },
@@ -71,6 +73,12 @@ export class ChitUI extends LitElement {
 
   /** @type {ChatState} */
   #state = 'closed';
+
+  /** @type {boolean | { html: string }} */
+  #typing = false;
+
+  /** @type {boolean} */
+  #loading = false;
 
   /**
    * Set by the widget's own event handlers just before they move the state, so
@@ -114,9 +122,6 @@ export class ChitUI extends LitElement {
 
     /** @type {Message[]} Rendered as given. The library never mutates this. */
     this.messages = [];
-
-    /** @type {boolean | { html: string }} Show the "typing" bubble. */
-    this.typing = false;
 
     /** @type {boolean} Lock the composer while a reply is in flight. */
     this.busy = false;
@@ -175,6 +180,220 @@ export class ChitUI extends LitElement {
       behavior: () => this.currentTheme.open.animation.scroll,
     });
     this.#composer = new ComposerController(this);
+
+    this.#launcherDrag = new DragController(this, {
+      name: 'launcher',
+      enabled: () => this.currentTheme.closed.draggable,
+      element: () => this.#part('launcher'),
+      size: () => boxOf(this.#part('launcher')),
+      corner: () => this.currentTheme.closed.position,
+      base: () => this.currentTheme.closed.offset,
+      current: () => this.#dragOffset,
+      onMove: (displacement) => this.#moveTo(displacement),
+      onSettle: (name) => this.#announceMove(name),
+      vars: { x: '--chit-launcher-offset-x', y: '--chit-launcher-offset-y' },
+    });
+
+    this.#panelDrag = new DragController(this, {
+      name: 'panel',
+      // On a phone the panel is the whole screen; there is nowhere to move it.
+      enabled: () => this.currentTheme.open.draggable && this.device === 'pc',
+      element: () => this.#part('panel'),
+      // What the theme asks for, capped by the window — never the measured
+      // box, which shrinks as the panel is pushed towards its own corner.
+      size: () => {
+        const open = this.currentTheme.open;
+        return {
+          width: Math.min(open.width, window.innerWidth - 16),
+          height: Math.min(open.height, window.innerHeight - 16),
+        };
+      },
+      corner: () => this.currentTheme.open.position,
+      base: () => this.currentTheme.open.offset,
+      current: () => this.#dragOffset,
+      onMove: (displacement) => this.#moveTo(displacement),
+      onSettle: (name) => this.#announceMove(name),
+      vars: { x: '--chit-panel-offset-x', y: '--chit-panel-offset-y' },
+    });
+  }
+
+  /** @type {DragController} */
+  #launcherDrag;
+
+  /** @type {DragController} */
+  #panelDrag;
+
+  /**
+   * @param {string} name
+   * @returns {HTMLElement | null}
+   */
+  #part(name) {
+    return /** @type {HTMLElement | null} */ (
+      this.renderRoot?.querySelector(`[part~="${name}"]`) ?? null
+    );
+  }
+
+  /** The launcher's drag, for the render function to hook up. */
+  get launcherDrag() {
+    return this.#launcherDrag;
+  }
+
+  /** The panel's drag, likewise. */
+  get panelDrag() {
+    return this.#panelDrag;
+  }
+
+  /**
+   * How far the reader has dragged the widget from where the theme put it, in
+   * screen pixels, or null when it is still there.
+   *
+   * There is one of these for the whole widget rather than one per state: the
+   * launcher and the panel are the same widget wearing two shapes, so moving
+   * either moves both, and the panel opens where the launcher was left.
+   *
+   * @type {{ x: number, y: number } | null}
+   */
+  get dragOffset() {
+    return this.#dragOffset;
+  }
+
+  set dragOffset(value) {
+    this.#dragOffset = value ? { x: value.x, y: value.y } : null;
+    this.#place();
+  }
+
+  /** Forget the dragged position and go back to what the theme says. */
+  resetPosition() {
+    this.dragOffset = null;
+  }
+
+  /** @type {{ x: number, y: number } | null} */
+  #dragOffset = null;
+
+  /**
+   * @param {{ x: number, y: number }} displacement
+   * @returns {void}
+   */
+  #moveTo(displacement) {
+    this.#dragOffset = displacement;
+    this.#place();
+  }
+
+  /** Put both shapes where the displacement says. */
+  #place() {
+    this.#launcherDrag.place(this.#dragOffset);
+    this.#panelDrag.place(this.#dragOffset);
+  }
+
+  /**
+   * @param {'launcher' | 'panel'} name
+   * @returns {void}
+   */
+  #announceMove(name) {
+    if (!this.#dragOffset) return;
+    const theme = this.currentTheme;
+    const side = name === 'launcher' ? theme.closed : theme.open;
+    const drag = name === 'launcher' ? this.#launcherDrag : this.#panelDrag;
+    emit(this, Events.MOVE, {
+      target: name,
+      position: side.position,
+      // The thing that was dragged is on screen by definition, so `place`
+      // gives the offset it actually landed on, clamp included.
+      offset: drag.place(this.#dragOffset) ?? side.offset,
+      displacement: { ...this.#dragOffset },
+    });
+  }
+
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  #loadingTimer;
+
+  /**
+   * The ids present when the wait began. A reply is anything from the other
+   * side that was not among them; the consumer's own echo of what the reader
+   * just sent is not an answer and must not end the wait.
+   *
+   * @type {Set<string> | undefined}
+   */
+  #waitFrom;
+
+  /**
+   * The composer calls this once a submit has gone out and no listener
+   * cancelled it. Listening for `chat-submit` here instead would be wrong:
+   * this element's own listener runs before the consumer's, so it cannot see
+   * a `preventDefault()` that is still to come.
+   *
+   * @returns {void}
+   */
+  handleSubmitted() {
+    this.#startWaiting();
+  }
+
+  /** Begin the automatic wait, if the theme asked for one. */
+  #startWaiting() {
+    const loading = this.currentTheme.open.loading;
+    if (!loading.auto) return;
+
+    this.#waitFrom = new Set(this.messages.map((message) => message.id));
+    this.loading = true;
+    this.#clearLoadingTimer();
+    if (loading.timeout > 0) {
+      this.#loadingTimer = setTimeout(() => {
+        this.#loadingTimer = undefined;
+        this.#stopWaiting();
+      }, loading.timeout);
+    }
+  }
+
+  /** End it, however it ended. */
+  #stopWaiting() {
+    this.#clearLoadingTimer();
+    this.#waitFrom = undefined;
+    this.loading = false;
+  }
+
+  #clearLoadingTimer() {
+    if (this.#loadingTimer !== undefined) clearTimeout(this.#loadingTimer);
+    this.#loadingTimer = undefined;
+  }
+
+  /**
+   * Show the "typing" bubble: `true`, or `{ html }` for your own markup.
+   *
+   * Turning this on turns `loading` off. The two describe the same pause in
+   * the conversation — one says a person is writing, the other that a server
+   * has not answered yet — and showing both would leave the reader to work
+   * out the difference.
+   *
+   * @type {boolean | { html: string }}
+   */
+  get typing() {
+    return this.#typing;
+  }
+
+  set typing(value) {
+    const previous = this.#typing;
+    if (value === previous) return;
+    this.#typing = value;
+    this.requestUpdate('typing', previous);
+    if (value) this.loading = false;
+  }
+
+  /**
+   * Show the "waiting for an answer" indicator. Turning this on turns
+   * `typing` off, for the reason given above.
+   *
+   * @type {boolean}
+   */
+  get loading() {
+    return this.#loading;
+  }
+
+  set loading(value) {
+    const previous = this.#loading;
+    if (value === previous) return;
+    this.#loading = value;
+    this.requestUpdate('loading', previous);
+    if (value) this.typing = false;
   }
 
   /**
@@ -537,6 +756,26 @@ export class ChitUI extends LitElement {
     const live = new Set(this.messages.map((message) => message.id));
     pruneComponents(this, live);
     this.#announceRenders(live);
+
+    // An answer has arrived when a message from the other side appears that
+    // was not there when the wait began.
+    // The shape on screen has just changed, so whatever is there now needs to
+    // be put where the drag left the widget — and clamped to today's window.
+    if (this.#dragOffset) this.#place();
+
+    if (this.#waitFrom) {
+      const answered = this.messages.some(
+        (message) =>
+          message.role !== 'user' && !(/** @type {Set<string>} */ (this.#waitFrom).has(message.id)),
+      );
+      if (answered) this.#stopWaiting();
+    }
+  }
+
+  /** @override */
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#clearLoadingTimer();
   }
 
   /**
@@ -582,4 +821,16 @@ export class ChitUI extends LitElement {
       ${showLauncher ? renderLauncher(this) : nothing} ${showPanel ? renderPanel(this) : nothing}
     `;
   }
+}
+
+/**
+ * The size of something on screen, or nothing at all when it is not there.
+ *
+ * @param {HTMLElement | null} element
+ * @returns {{ width: number, height: number }}
+ */
+function boxOf(element) {
+  if (!element) return { width: 0, height: 0 };
+  const box = element.getBoundingClientRect();
+  return { width: box.width, height: box.height };
 }

@@ -23,6 +23,7 @@ const CLOSED_PC = {
   position: 'bottom-right',
   offset: { x: 24, y: 24 },
   radius: 30,
+  draggable: false,
   image: null,
   label: null,
   component: null,
@@ -72,6 +73,9 @@ export const defaultTheme = {
     offset: { x: 24, y: 24 },
     radius: 16,
     launcher: /** @type {const} */ ('hidden'),
+    // Off by default: a widget that slides around under the thumb on a first
+    // touch would be startling, and most pages want it where they put it.
+    draggable: false,
     header: { visible: true, title: null, logo: null, home: false },
     background: { image: null },
     colors: {
@@ -95,6 +99,18 @@ export const defaultTheme = {
     // enough to show who is talking, and a tail is a strong look to impose on
     // a widget that has to sit in someone else's page.
     bubble: { radius: 14, tail: /** @type {const} */ ('none') },
+    // The wait for an answer. `auto` is opt-in: a widget that starts showing
+    // a wait on its own would be guessing that every submit is followed by a
+    // round trip, which is not true of a form or a scenario branch.
+    loading: {
+      auto: false,
+      // A spinner rather than the typing dots: the same three dots would say
+      // "someone is writing to you", which is not what a wait on a server is.
+      // `'dots'` is there for the cases where it really is a person.
+      style: /** @type {const} */ ('spinner'),
+      text: null,
+      timeout: 0,
+    },
     // Who is talking. Nothing by default: a widget that invents a name and a
     // face for the consumer's support desk would be guessing.
     speaker: {

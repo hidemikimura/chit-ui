@@ -69,6 +69,32 @@ const STATES = {
     el.messages = [{ id: 'a', role: 'assistant', html: '<p>ご用件をどうぞ。</p>' }];
     return el.open();
   },
+  'waiting for an answer': async (el) => {
+    const { greenTheme } = await import('/src/themes/index.js');
+    el.theme = {
+      ...greenTheme,
+      open: {
+        ...greenTheme.open,
+        animation: { enter: 'none', exit: 'none', duration: 0 },
+        loading: { style: 'spinner', text: '回答を作成しています' },
+      },
+    };
+    el.messages = [{ id: 'a', role: 'user', html: '<p>配送について</p>', status: 'sent' }];
+    el.loading = true;
+    return el.open();
+  },
+  'draggable': async (el) => {
+    el.theme = {
+      closed: { draggable: true, animation: { enter: 'none', exit: 'none', duration: 0 } },
+      open: {
+        draggable: true,
+        header: { title: 'ecx サポート' },
+        animation: { enter: 'none', exit: 'none', duration: 0 },
+      },
+    };
+    el.messages = [{ id: 'a', role: 'assistant', html: '<p>ご用件をどうぞ。</p>' }];
+    return el.open();
+  },
   'green preset': async (el) => {
     const { greenTheme } = await import('/src/themes/index.js');
     el.theme = {

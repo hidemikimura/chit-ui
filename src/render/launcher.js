@@ -34,7 +34,15 @@ export function renderLauncher(host) {
       aria-expanded=${host.state === 'open'}
       ?data-has-image=${!custom && !!closed.image}
       ?data-custom=${!!custom}
-      @click=${() => host.toggleFromUser()}
+      ?data-draggable=${closed.draggable}
+      @pointerdown=${(/** @type {PointerEvent} */ event) => host.launcherDrag.start(event)}
+      @keydown=${(/** @type {KeyboardEvent} */ event) => host.launcherDrag.nudge(event)}
+      @click=${() => {
+        // The pointer-up that ends a drag is followed by a click; opening the
+        // panel then would punish the reader for having moved the button.
+        if (host.launcherDrag.consumeDrag()) return;
+        host.toggleFromUser();
+      }}
     >
       ${custom ?? html`<slot name="launcher">${defaultContent(closed)}</slot>`}
     </button>

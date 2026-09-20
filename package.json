@@ -1,6 +1,6 @@
 {
   "name": "@hidemikimura/chit-ui",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Lit-based chat widget UI: launcher, panel, themable, any HTML or Lit component as a message",
   "license": "MIT",
   "author": "Hidemi Kimura",

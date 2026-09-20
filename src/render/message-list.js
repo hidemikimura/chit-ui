@@ -6,6 +6,34 @@ import { renderMessage } from './message.js';
 /** @import { ChitUI } from '../chit-ui.js' */
 
 /**
+ * The wait for an answer, at the end of the conversation.
+ *
+ * It stands where the typing bubble stands and replaces it while it is up:
+ * "typing" and "waiting for the server" are the same moment of the
+ * conversation, and two indicators for one wait would only ask the reader to
+ * work out the difference.
+ *
+ * @param {ChitUI} host
+ * @returns {import('lit').TemplateResult}
+ */
+function renderLoading(host) {
+  const { style, text } = host.currentTheme.open.loading;
+  const label = text ?? host.currentLabels.loading;
+
+  return html`
+    <div part="loading" data-style=${style} role="status" aria-label=${label}>
+      ${style === 'dots'
+        ? html`<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>`
+        : nothing}
+      ${style === 'spinner' ? html`<span part="spinner" aria-hidden="true"></span>` : nothing}
+      ${style === 'text' || text
+        ? html`<span part="loading-text">${label}</span>`
+        : nothing}
+    </div>
+  `;
+}
+
+/**
  * The scrolling conversation.
  *
  * `repeat` keys on the message id so an existing bubble's DOM is reused when
@@ -22,7 +50,7 @@ import { renderMessage } from './message.js';
 export function renderMessageList(host) {
   const labels = host.currentLabels;
   const typing = host.typing;
-  const empty = host.messages.length === 0 && !typing;
+  const empty = host.messages.length === 0 && !typing && !host.loading;
 
   return html`
     <div
@@ -40,15 +68,17 @@ export function renderMessageList(host) {
           (message) => message.id,
           (message) => renderMessage(host, message),
         )}
-        ${typing
-          ? html`
-              <div part="typing" role="status" aria-label=${labels.typing}>
-                ${typeof typing === 'object' && typing.html
-                  ? host.renderTypingHtml(typing.html)
-                  : html`<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>`}
-              </div>
-            `
-          : nothing}
+        ${host.loading
+          ? renderLoading(host)
+          : typing
+            ? html`
+                <div part="typing" role="status" aria-label=${labels.typing}>
+                  ${typeof typing === 'object' && typing.html
+                    ? host.renderTypingHtml(typing.html)
+                    : html`<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>`}
+                </div>
+              `
+            : nothing}
       </div>
     </div>
 
