@@ -4,6 +4,13 @@
 バージョンは [Semantic Versioning](https://semver.org/lang/ja/) に従いますが、0.x の間は
 マイナー更新に破壊的変更が入ることがあります。
 
+## 未リリース
+
+### 追加
+
+- `package.json` に `homepage`（ドキュメントサイト）、`repository`、`bugs` を入れました。
+  npm のページからドキュメントとリポジトリに行けます。
+
 ## 0.3.2 — 2026-09-20
 
 ### 追加

@@ -3,6 +3,14 @@
   "version": "0.3.2",
   "description": "Lit-based chat widget UI: launcher, panel, themable, any HTML or Lit component as a message",
   "license": "MIT",
+  "homepage": "https://hidemikimura.github.io/chit-ui/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hidemikimura/chit-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hidemikimura/chit-ui/issues"
+  },
   "author": "Hidemi Kimura",
   "type": "module",
   "main": "./src/index.js",

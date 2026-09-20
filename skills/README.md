@@ -25,7 +25,8 @@ skill を読み込まないツールでも、`SKILL.md` と `references/` を渡
 
 ## 書くときの約束
 
-人間向けの説明は README.md とドキュメントサイト（`site/`）が正本で、ここはその要約では
+人間向けの説明は README.md とドキュメントサイト
+（https://hidemikimura.github.io/chit-ui/ ・中身は `site/`）が正本で、ここはその要約では
 ありません。**AI が間違えやすいところ**を優先して書きます。`messages` の所有者が利用者側で
 あること、`push` では描画されないこと、`text` と `html` の使い分け、`typing` と `loading`
 が排他であること、といった「知らないと自然に踏む地雷」が中心です。

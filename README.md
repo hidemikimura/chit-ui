@@ -10,9 +10,11 @@ JavaScript ライブラリです。通信も会話ロジックも、発言の中
 - 発言の中身は HTML 文字列でも Lit テンプレートでも `LitElement` を継承したコンポーネントでも可
 - 依存は Lit のみ。単一バンドルは gzip 約 26 KB
 
-ドキュメントサイト（人間向け）は [`site/`](site/) にあります。`npm run dev` のあと
-`/site/` を開くとその場で読めます。AI コーディング支援向けの説明書は
-[`skills/chit-ui/`](skills/chit-ui/) にあり、npm パッケージにも同梱しています。
+ドキュメント（人間向け）: **https://hidemikimura.github.io/chit-ui/**
+（中身は [`site/`](site/)。`npm run dev` のあと `/site/` を開けば手元でも読めます）
+
+AI コーディング支援向けの説明書は [`skills/chit-ui/`](skills/chit-ui/) にあり、
+npm パッケージにも同梱しています。
 
 ## はじめに
 
