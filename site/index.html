@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Chit UI — Lit で書かれたチャットウィジェット</title>
+    <meta
+      name="description"
+      content="ページの隅に置けるチャットウィジェットのカスタム要素。通信も状態管理も持たず、発言の配列を渡すと描きます。"
+    />
+    <link rel="stylesheet" href="./assets/site.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%231f6feb' d='M16 4C8.8 4 3 8.9 3 15c0 3.5 1.9 6.6 4.9 8.6L7 28l5.2-2.6c1.2.3 2.5.4 3.8.4 7.2 0 13-4.9 13-11S23.2 4 16 4z'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <a class="skip" href="#main">本文へ</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html">Chit UI <span>@hidemikimura/chit-ui</span></a>
+      <nav aria-label="サイト">
+        <a href="./index.html" aria-current="page">トップ</a>
+        <a href="./guide.html">使い方</a>
+        <a href="./api.html">リファレンス</a>
+        <a href="https://github.com/hidemikimura/chit-ui">GitHub</a>
+        <a href="https://www.npmjs.com/package/@hidemikimura/chit-ui">npm</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <article>
+        <div class="hero">
+          <h1>チャット UI だけを引き受けます</h1>
+          <p class="lead">
+            ページの隅に置けるチャットウィジェットのカスタム要素です。通信も状態管理も発言の保存も
+            持たず、あなたが持っている発言の配列を受け取って描きます。
+          </p>
+
+          <div class="badges">
+            <span>Lit 3</span>
+            <span>依存は lit だけ</span>
+            <span>gzip 26 KB</span>
+            <span>MIT</span>
+          </div>
+
+          <div class="actions">
+            <a class="button primary" href="./guide.html">使い方を読む</a>
+            <a class="button" href="./api.html">リファレンス</a>
+            <a class="button" href="https://github.com/hidemikimura/chit-ui">GitHub</a>
+          </div>
+        </div>
+
+        <div class="wrap">
+          <section class="playground" data-controls>
+            <h2>このページで動いています</h2>
+            <p>
+              右下のランチャーは本物の Chit UI です。開いて入力すると返事が返ります（通信はせず、
+              このページの中で作っています）。ドラッグで場所も動かせます。
+            </p>
+            <div class="controls">
+              <button type="button" data-action="open">開く / 閉じる</button>
+              <button type="button" data-action="theme" aria-pressed="false">付属テーマ</button>
+              <button type="button" data-action="loading" aria-pressed="false">応答待ち</button>
+              <button type="button" data-action="typing" aria-pressed="false">入力中</button>
+              <button type="button" data-action="reset">最初に戻す</button>
+            </div>
+            <p class="widget-status" data-widget-status>読み込んでいます…</p>
+          </section>
+
+          <h2 id="install">入れる</h2>
+
+          <p><code>&lt;script&gt;</code> 1 本で使えます。ビルドは要りません。</p>
+
+          <pre><code>&lt;script type="module" src="https://cdn.jsdelivr.net/npm/@hidemikimura/chit-ui/dist/chit-ui.min.js"&gt;&lt;/script&gt;
+
+&lt;chit-ui id="chat"&gt;&lt;/chit-ui&gt;</code></pre>
+
+          <p>npm から使うときは Lit も一緒に入れます。</p>
+
+          <pre><code>npm install @hidemikimura/chit-ui lit</code></pre>
+
+          <pre><code>import '@hidemikimura/chit-ui';   // &lt;chit-ui&gt; を登録する</code></pre>
+
+          <h2 id="minimum">いちばん小さい例</h2>
+
+          <p>
+            送信されたら <code>chat-submit</code> が飛んできます。発言を積むのも、
+            バックエンドに聞きに行くのも、あなたのコードです。
+          </p>
+
+          <pre><code>const chat = document.getElementById('chat');
+
+chat.addEventListener('chat-submit', async (event) =&gt; {
+  const text = event.detail.text;
+
+  chat.messages = [...chat.messages, { id: crypto.randomUUID(), role: 'user', text }];
+  chat.busy = true;
+  chat.loading = true;
+
+  const reply = await yourBackend(text);
+
+  chat.loading = false;
+  chat.busy = false;
+  chat.messages = [...chat.messages,
+    { id: crypto.randomUUID(), role: 'assistant', text: reply }];
+});</code></pre>
+
+          <div class="note">
+            <p>
+              <code>messages</code> の所有者はあなたです。ライブラリが書き換えることは一度も
+              ありません。そのぶん、保存も復元も未読管理も自分のやり方でできます。
+            </p>
+          </div>
+
+          <h2 id="features">できること</h2>
+
+          <div class="cards">
+            <div class="card">
+              <h3>5 つの発言形式</h3>
+              <p>
+                素のテキスト、HTML、Lit のテンプレート、DOM 要素、そしてカスタム要素。注文カードでも
+                予約フォームでも吹き出しの中に置けます。
+              </p>
+            </div>
+            <div class="card">
+              <h3>テーマと CSS パーツ</h3>
+              <p>
+                色・大きさ・位置・角丸・しっぽをオブジェクトで指定。細部は CSS カスタムプロパティと
+                <code>::part()</code> で直接触れます。
+              </p>
+            </div>
+            <div class="card">
+              <h3>スマホで素直に動く</h3>
+              <p>
+                幅が狭ければ全画面。キーボードが出ている間も入力欄が隠れず、入力欄にフォーカスしても
+                画面が拡大しません。
+              </p>
+            </div>
+            <div class="card">
+              <h3>読み手のスクロールを奪わない</h3>
+              <p>
+                最新に追従するのは最下部にいるときだけ。さかのぼって読んでいる人は動かさず、
+                「最新へ」のボタンを出します。
+              </p>
+            </div>
+            <div class="card">
+              <h3>アクセシビリティ</h3>
+              <p>
+                ダイアログとして扱われ、Esc で閉じ、フォーカスが行き来します。既定テーマの配色は
+                すべて WCAG AA を満たします。
+              </p>
+            </div>
+            <div class="card">
+              <h3>AI 向けの説明書つき</h3>
+              <p>
+                パッケージに <code>skills/</code> が入っています。Claude Code などに読ませると、
+                この API の癖を踏まえたコードを書いてくれます。
+              </p>
+            </div>
+          </div>
+
+          <h2 id="next">次に読む</h2>
+
+          <p>
+            <a href="./guide.html">使い方</a>は、発言の形・テーマ・待ち時間の見せ方・ドラッグ・
+            スマホでの振る舞いまでを順に説明します。プロパティやイベントを引きたいときは
+            <a href="./api.html">リファレンス</a>へ。
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>MIT License · Hidemi Kimura</span>
+        <span>
+          <a href="https://github.com/hidemikimura/chit-ui">GitHub</a> ·
+          <a href="https://www.npmjs.com/package/@hidemikimura/chit-ui">npm</a>
+        </span>
+      </div>
+    </footer>
+
+    <chit-ui></chit-ui>
+    <script type="module" src="./assets/site.js"></script>
+  </body>
+</html>

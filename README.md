@@ -8,7 +8,11 @@ JavaScript ライブラリです。通信も会話ロジックも、発言の中
 - 閉じた状態（ランチャー）・開いた状態（パネル）・非表示の 3 状態
 - 状態ごとのテーマ。閉じた状態は PC とスマホで別々に指定できます
 - 発言の中身は HTML 文字列でも Lit テンプレートでも `LitElement` を継承したコンポーネントでも可
-- 依存は Lit のみ。単一バンドルは gzip 約 19 KB
+- 依存は Lit のみ。単一バンドルは gzip 約 26 KB
+
+ドキュメントサイト（人間向け）は [`site/`](site/) にあります。`npm run dev` のあと
+`/site/` を開くとその場で読めます。AI コーディング支援向けの説明書は
+[`skills/chit-ui/`](skills/chit-ui/) にあり、npm パッケージにも同梱しています。
 
 ## はじめに
 
@@ -731,7 +735,7 @@ chat.addEventListener('chat-message-click', (event) => {
 - ストリーミング中の発言は `aria-busy="true"` なので、1 文字ずつ読み上げられません
 - `prefers-reduced-motion` を尊重します
 - 既定テーマの文字色と背景色の組み合わせはすべて WCAG AA（4.5:1）以上です
-- `npm run audit:a11y` で axe-core による監査を実行できます（6 状態、違反 0 を維持）
+- `npm run audit:a11y` で axe-core による監査を実行できます（10 状態、違反 0 を維持）
 
 ## ブラウザ
 
@@ -751,6 +755,13 @@ npm run audit:a11y   # axe-core による監査
 npm run build        # 型定義と単一バンドルを dist/ に出力
 npm run check        # 上記をまとめて
 ```
+
+### ドキュメントと skill
+
+API を変えたら、`README.md`・`site/`（ドキュメントサイト）・`skills/`（AI 向け）の 3 つを
+一緒に更新します。サイトはビルド工程を持たないので、`site/` の HTML を直せばそれで終わりです。
+公開は `.github/workflows/pages.yml` が `site/` を GitHub Pages へ上げます
+（Settings → Pages → Source を「GitHub Actions」にしておく）。
 
 ### リリース前の手動チェック
 

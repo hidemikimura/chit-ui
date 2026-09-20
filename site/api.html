@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>リファレンス — Chit UI</title>
+    <meta
+      name="description"
+      content="Chit UI のプロパティ・メソッド・イベント・スロット・CSS パーツ・CSS カスタムプロパティ・テーマの一覧。"
+    />
+    <link rel="stylesheet" href="./assets/site.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%231f6feb' d='M16 4C8.8 4 3 8.9 3 15c0 3.5 1.9 6.6 4.9 8.6L7 28l5.2-2.6c1.2.3 2.5.4 3.8.4 7.2 0 13-4.9 13-11S23.2 4 16 4z'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <a class="skip" href="#main">本文へ</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html">Chit UI <span>@hidemikimura/chit-ui</span></a>
+      <nav aria-label="サイト">
+        <a href="./index.html">トップ</a>
+        <a href="./guide.html">使い方</a>
+        <a href="./api.html" aria-current="page">リファレンス</a>
+        <a href="https://github.com/hidemikimura/chit-ui">GitHub</a>
+        <a href="https://www.npmjs.com/package/@hidemikimura/chit-ui">npm</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <div class="with-toc">
+        <nav class="toc" aria-label="目次">
+          <h2>目次</h2>
+        </nav>
+
+        <article>
+          <h1>リファレンス</h1>
+          <p class="lead">
+            0.3.2 時点。パーツ名・プロパティ名・イベント名・スロット名・CSS カスタムプロパティ名は
+            公開 API として扱い、変更はメジャーバージョンでのみ行います。
+          </p>
+
+          <h2 id="entries">エントリポイント</h2>
+
+          <div class="scroll-x">
+            <table>
+              <thead>
+                <tr><th>指定</th><th>中身</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>@hidemikimura/chit-ui</code></td><td><code>&lt;chit-ui&gt;</code> を登録する。型もここから読める</td></tr>
+                <tr><td><code>@hidemikimura/chit-ui/element.js</code></td><td>登録しない。<code>ChitUI</code> クラスだけ</td></tr>
+                <tr><td><code>@hidemikimura/chit-ui/themes.js</code></td><td>付属テーマ（<code>greenTheme</code>）</td></tr>
+                <tr><td><code>dist/chit-ui.min.js</code></td><td>Lit 同梱の ESM 単一バンドル</td></tr>
+                <tr><td><code>dist/chit-ui.iife.min.js</code></td><td>同上の IIFE 版。<code>window.ChitUI</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="properties">プロパティ</h2>
+
+          <div class="scroll-x">
+            <table>
+              <thead>
+                <tr><th>プロパティ</th><th>型</th><th>既定</th><th>内容</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>state</code></td><td><code>'closed' | 'open' | 'hidden'</code></td><td><code>'closed'</code></td><td>現在の状態</td></tr>
+                <tr><td><code>theme</code></td><td><code>Theme</code></td><td><code>{}</code></td><td>テーマ（部分指定可）</td></tr>
+                <tr><td><code>messages</code></td><td><code>Message[]</code></td><td><code>[]</code></td><td>描画する発言。必ず新しい配列を代入する</td></tr>
+                <tr><td><code>typing</code></td><td><code>boolean | { html }</code></td><td><code>false</code></td><td>相手が入力中の表示。<code>loading</code> とは排他</td></tr>
+                <tr><td><code>loading</code></td><td><code>boolean</code></td><td><code>false</code></td><td>応答待ちの表示。属性にも反映される</td></tr>
+                <tr><td><code>busy</code></td><td><code>boolean</code></td><td><code>false</code></td><td>送信中。入力をロックする</td></tr>
+                <tr><td><code>inputDisabled</code></td><td><code>boolean</code></td><td><code>false</code></td><td>入力欄を見せたままロック</td></tr>
+                <tr><td><code>inputHidden</code></td><td><code>boolean</code></td><td><code>false</code></td><td>入力欄を消す</td></tr>
+                <tr><td><code>value</code></td><td><code>string</code></td><td><code>''</code></td><td>入力欄の内容</td></tr>
+                <tr><td><code>placeholder</code></td><td><code>string</code></td><td>テーマの値</td><td>入力欄のプレースホルダー</td></tr>
+                <tr><td><code>sendOnEnter</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Enter で送信するか</td></tr>
+                <tr><td><code>maxLength</code></td><td><code>number</code></td><td>なし</td><td>入力の上限（コードポイント単位）</td></tr>
+                <tr><td><code>focusOnOpen</code></td><td><code>'auto' | 'always' | 'never'</code></td><td><code>'auto'</code></td><td>開いたときの自動フォーカス。<code>auto</code> は PC のみ</td></tr>
+                <tr><td><code>sanitize</code></td><td><code>(html) =&gt; string</code></td><td>なし</td><td><code>html</code> 発言のサニタイズ</td></tr>
+                <tr><td><code>formatTime</code></td><td><code>(time: Date) =&gt; string</code></td><td><code>HH:mm</code></td><td>時刻表示</td></tr>
+                <tr><td><code>messageStyles</code></td><td><code>string</code></td><td><code>''</code></td><td>発言の中に適用する追加 CSS</td></tr>
+                <tr><td><code>locale</code></td><td><code>string</code></td><td><code>&lt;html lang&gt;</code></td><td>ラベルと時刻の言語</td></tr>
+                <tr><td><code>labels</code></td><td><code>Partial&lt;Labels&gt;</code></td><td>なし</td><td>UI 文字列の上書き</td></tr>
+                <tr><td><code>dragOffset</code></td><td><code>{ x, y } | null</code></td><td><code>null</code></td><td>ドラッグで生じたずれ。読み書きできる</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            読み取り専用: <code>renderedState</code>、<code>device</code>
+            （<code>'pc' | 'mobile'</code>）、<code>hasUnseen</code>、<code>canSend</code>、
+            <code>currentTheme</code>、<code>currentLabels</code>、<code>resolvedLocale</code>。
+          </p>
+
+          <h2 id="methods">メソッド</h2>
+
+          <div class="scroll-x">
+            <table>
+              <thead>
+                <tr><th>メソッド</th><th>内容</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>open()</code> <code>close()</code> <code>hide()</code> <code>show()</code> <code>toggle()</code></td><td>状態遷移。アニメーション完了で resolve する Promise（中止されたら <code>false</code>）</td></tr>
+                <tr><td><code>submit(text?)</code></td><td><code>chat-submit</code> を発火。省略時は入力欄の内容</td></tr>
+                <tr><td><code>focusInput()</code> <code>clearInput()</code></td><td>入力欄の操作</td></tr>
+                <tr><td><code>scrollToBottom({ smooth })</code></td><td>最新へスクロール。省略時はテーマの設定に従う</td></tr>
+                <tr><td><code>getMessageElement(id)</code></td><td>その発言のコンテナ DOM（未描画なら <code>null</code>）</td></tr>
+                <tr><td><code>home()</code></td><td><code>chat-home</code> を発火（ホームボタンと同じ）</td></tr>
+                <tr><td><code>openAttach()</code></td><td>添付のファイル選択を開く</td></tr>
+                <tr><td><code>resetPosition()</code></td><td>ドラッグで動かした位置を忘れる</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="events">イベント</h2>
+
+          <p>
+            すべて <code>CustomEvent</code> で、<code>bubbles</code> と <code>composed</code> が
+            立っているので <code>document</code> でも拾えます。<code>trigger</code> は
+            <code>'user'</code>（クリックや Esc）か <code>'api'</code>（メソッドやプロパティ代入）です。
+          </p>
+
+          <div class="scroll-x">
+            <table>
+              <thead>
+                <tr><th>イベント</th><th>タイミング</th><th><code>detail</code></th><th>中止</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>chat-submit</code></td><td>送信された</td><td><code>{ text }</code></td><td>○</td></tr>
+                <tr><td><code>chat-before-open</code> / <code>chat-before-close</code></td><td>遷移の直前</td><td><code>{ from, trigger }</code></td><td>○</td></tr>
+                <tr><td><code>chat-open</code> / <code>chat-close</code></td><td>遷移アニメーション完了</td><td><code>{ from, trigger }</code></td><td></td></tr>
+                <tr><td><code>chat-hide</code> / <code>chat-show</code></td><td>非表示になった / 戻った</td><td><code>{ from, to }</code></td><td></td></tr>
+                <tr><td><code>chat-state-change</code></td><td><code>state</code> が変わった直後</td><td><code>{ from, to, trigger }</code></td><td></td></tr>
+                <tr><td><code>chat-input</code></td><td>入力欄が編集された</td><td><code>{ value }</code></td><td></td></tr>
+                <tr><td><code>chat-message-render</code></td><td>発言が描画・更新された</td><td><code>{ message, element, instance }</code></td><td></td></tr>
+                <tr><td><code>chat-message-click</code></td><td>発言の中がクリックされた</td><td><code>{ message, target, originalEvent }</code></td><td>○</td></tr>
+                <tr><td><code>chat-scroll-top</code></td><td>一覧が最上部に達した</td><td><code>{}</code></td><td></td></tr>
+                <tr><td><code>chat-breakpoint-change</code></td><td>PC / スマホの判定が変わった</td><td><code>{ device }</code></td><td></td></tr>
+                <tr><td><code>chat-home</code></td><td>ホームボタン、または <code>home()</code></td><td><code>{ trigger }</code></td><td></td></tr>
+                <tr><td><code>chat-attach</code></td><td>添付ファイルが選ばれた</td><td><code>{ files: File[] }</code></td><td></td></tr>
+                <tr><td><code>chat-move</code></td><td>ドラッグまたは矢印キー</td><td><code>{ target, position, offset, displacement }</code></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="message">発言オブジェクト</h2>
+
+          <pre><code>{
+  id: string,                       // 必須・安定していること
+  role: 'user' | 'assistant' | 'system',
+  name?: string | null,             // テーマの既定を打ち消すなら null
+  avatar?: string | null,
+  time?: Date | string | number,
+  status?: 'sending' | 'sent' | 'error',
+  streaming?: boolean,              // 末尾にカーソル、aria-busy
+  meta?: unknown,                   // 自由欄。イベントでそのまま返る
+
+  // 以下のいずれか 1 つ
+  text?: string,
+  html?: string,
+  template?: TemplateResult,
+  element?: HTMLElement,
+  component?: (new () =&gt; HTMLElement) | string,
+  props?: Record&lt;string, unknown&gt;,
+}</code></pre>
+
+          <h2 id="theme">テーマ</h2>
+
+          <pre><code>{
+  breakpoint?: number,                       // 既定 768
+  closed?: {
+    // pc / mobile に分けて書ける。分けなければ両方に同じ設定
+    position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left',
+    offset?: { x: number, y: number },
+    size?: number | 'auto',
+    radius?: number,
+    image?: string | null,
+    label?: string | null,
+    component?: (new () =&gt; HTMLElement) | string,
+    props?: Record&lt;string, unknown&gt;,
+    colors?: { bg?, text?, shadow? },
+    draggable?: boolean,                     // 既定 false
+    animation?: { enter?, exit?, duration? },
+  },
+  open?: {
+    width?: number, height?: number,         // スマホでは無視（常に全画面）
+    position?: Position, offset?: { x, y },
+    radius?: number,
+    launcher?: 'hidden' | 'visible',
+    draggable?: boolean,                     // 取っ手はタイトルバー。スマホでは無効
+    header?: { visible?, title?, logo?, home? },
+    bubble?: { radius?: number, tail?: 'none' | 'top' | 'bottom' },
+    speaker?: { assistant?: { name?, avatar? }, user?: { name?, avatar? } },
+    loading?: { auto?, style?: 'dots' | 'spinner' | 'text', text?, timeout? },
+    input?: { maxRows?, placeholder?, attach?, accept?, multiple? },
+    colors?: { bg?, text?, accent?, border?, userBubble?, userText?, assistantBubble?,
+               assistantText?, systemText?, headerBg?, headerText?, inputBg?, inputText?,
+               inputPlaceholder? },
+    bgImage?: string | null,
+    animation?: { enter?, exit?, duration?, scroll?: 'smooth' | 'instant' },
+  },
+  hidden?: { animation?: { exit?, duration? } },
+}</code></pre>
+
+          <p>
+            <code>animation</code> の <code>enter</code> / <code>exit</code> は
+            <code>'fade'</code> / <code>'scale'</code> / <code>'slide'</code> /
+            <code>'none'</code>。長さは <code>duration</code>（ms）で、CSS 変数にはしていません
+            （遷移の完了を JavaScript 側が知る必要があるためです）。
+          </p>
+
+          <h2 id="slots">スロット</h2>
+
+          <div class="scroll-x">
+            <table>
+              <thead>
+                <tr><th>スロット</th><th>差し替え対象</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>launcher</code></td><td>閉じた状態のアイコンの中身</td></tr>
+                <tr><td><code>header</code></td><td>パネルヘッダー全体（<code>header-title</code> / <code>header-actions</code> で部分差し替えも可）</td></tr>
+                <tr><td><code>empty</code></td><td>発言が 1 件もないときの表示</td></tr>
+                <tr><td><code>input-before</code> / <code>input-after</code></td><td>入力欄の前後</td></tr>
+                <tr><td><code>composer</code></td><td>入力欄全体。差し替えたら <code>submit(text)</code> を自分で呼ぶ</td></tr>
+                <tr><td><code>footer</code></td><td>入力欄の下（免責事項など）</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2 id="parts">CSS パーツ</h2>
+
+          <p><code>::part()</code> で外からスタイルを当てられます。</p>
+
+          <p>
+            <code>launcher</code> <code>launcher-icon</code> <code>launcher-label</code>
+            <code>panel</code> <code>header</code> <code>header-title</code>
+            <code>header-heading</code> <code>header-logo</code> <code>header-actions</code>
+            <code>home-button</code> <code>close-button</code> <code>messages</code>
+            <code>messages-inner</code> <code>message</code> <code>message-user</code>
+            <code>message-assistant</code> <code>message-system</code> <code>bubble</code>
+            <code>message-content</code> <code>avatar</code> <code>name</code> <code>meta</code>
+            <code>time</code> <code>status</code> <code>cursor</code> <code>typing</code>
+            <code>loading</code> <code>loading-text</code> <code>to-latest</code>
+            <code>composer</code> <code>input</code> <code>attach-button</code>
+            <code>attach-input</code> <code>counter</code> <code>send-button</code>
+            <code>spinner</code>
+          </p>
+
+          <h2 id="css">CSS カスタムプロパティ</h2>
+
+          <p>テーマの値はここに出ます。ページ側の指定のほうが優先されます。</p>
+
+          <h3 id="css-colors">色</h3>
+          <p>
+            <code>--chit-color-bg</code> <code>--chit-color-text</code>
+            <code>--chit-color-accent</code> <code>--chit-color-border</code>
+            <code>--chit-color-user-bg</code> <code>--chit-color-user-text</code>
+            <code>--chit-color-assistant-bg</code> <code>--chit-color-assistant-text</code>
+            <code>--chit-color-system-text</code> <code>--chit-color-header-bg</code>
+            <code>--chit-color-header-text</code> <code>--chit-color-input-bg</code>
+            <code>--chit-color-input-text</code> <code>--chit-color-input-placeholder</code>
+          </p>
+
+          <h3 id="css-launcher">ランチャー</h3>
+          <p>
+            <code>--chit-launcher-size</code> <code>--chit-launcher-radius</code>
+            <code>--chit-launcher-offset-x</code> <code>--chit-launcher-offset-y</code>
+            <code>--chit-launcher-bg</code> <code>--chit-launcher-text</code>
+            <code>--chit-launcher-shadow</code> <code>--chit-launcher-image</code>
+          </p>
+
+          <h3 id="css-panel">パネルと吹き出し</h3>
+          <p>
+            <code>--chit-panel-width</code> <code>--chit-panel-height</code>
+            <code>--chit-panel-radius</code> <code>--chit-panel-offset-x</code>
+            <code>--chit-panel-offset-y</code> <code>--chit-panel-shadow</code>
+            <code>--chit-panel-bg-image</code> <code>--chit-bubble-radius</code>
+          </p>
+
+          <h3 id="css-global">全体</h3>
+          <p>
+            <code>--chit-font-family</code> <code>--chit-font-size</code>
+            <code>--chit-z-index</code>
+          </p>
+
+          <div class="note">
+            <p><code>--_chit-</code> で始まる変数は内部用です。変更しないでください。</p>
+          </div>
+
+          <h2 id="types">型</h2>
+
+          <pre><code>import type { Message, Theme, Position, Role, ChatState, Device } from '@hidemikimura/chit-ui';</code></pre>
+
+          <p>
+            <code>chit-ui</code> 要素と <code>chat-*</code> イベントの型も一緒に入るので、
+            <code>document.querySelector('chit-ui')</code> の戻り値や
+            <code>addEventListener('chat-submit', ...)</code> の <code>detail</code> に型が付きます。
+          </p>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>MIT License · Hidemi Kimura</span>
+        <span>
+          <a href="https://github.com/hidemikimura/chit-ui">GitHub</a> ·
+          <a href="https://www.npmjs.com/package/@hidemikimura/chit-ui">npm</a>
+        </span>
+      </div>
+    </footer>
+
+    <chit-ui></chit-ui>
+    <script type="module" src="./assets/site.js"></script>
+  </body>
+</html>

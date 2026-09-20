@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>使い方 — Chit UI</title>
+    <meta
+      name="description"
+      content="Chit UI の使い方。発言の形、テーマ、応答待ちの見せ方、ドラッグ、スマホでの振る舞いまで。"
+    />
+    <link rel="stylesheet" href="./assets/site.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%231f6feb' d='M16 4C8.8 4 3 8.9 3 15c0 3.5 1.9 6.6 4.9 8.6L7 28l5.2-2.6c1.2.3 2.5.4 3.8.4 7.2 0 13-4.9 13-11S23.2 4 16 4z'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <a class="skip" href="#main">本文へ</a>
+
+    <header class="site-header">
+      <a class="brand" href="./index.html">Chit UI <span>@hidemikimura/chit-ui</span></a>
+      <nav aria-label="サイト">
+        <a href="./index.html">トップ</a>
+        <a href="./guide.html" aria-current="page">使い方</a>
+        <a href="./api.html">リファレンス</a>
+        <a href="https://github.com/hidemikimura/chit-ui">GitHub</a>
+        <a href="https://www.npmjs.com/package/@hidemikimura/chit-ui">npm</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <div class="with-toc">
+        <nav class="toc" aria-label="目次">
+          <h2>目次</h2>
+        </nav>
+
+        <article>
+          <h1>使い方</h1>
+          <p class="lead">
+            このページを上から読めば、一通りのことはできるようになります。引きたいだけなら
+            <a href="./api.html">リファレンス</a>へ。
+          </p>
+
+          <h2 id="start">はじめに</h2>
+
+          <p>
+            <code>&lt;script&gt;</code> 1 本で使う方法と、npm から使う方法があります。どちらでも
+            機能は同じです。
+          </p>
+
+          <pre><code>&lt;script type="module" src="https://cdn.jsdelivr.net/npm/@hidemikimura/chit-ui/dist/chit-ui.min.js"&gt;&lt;/script&gt;
+
+&lt;chit-ui id="chat"&gt;&lt;/chit-ui&gt;</code></pre>
+
+          <pre><code>npm install @hidemikimura/chit-ui lit</code></pre>
+
+          <pre><code>import '@hidemikimura/chit-ui';                          // &lt;chit-ui&gt; を登録する
+import { greenTheme } from '@hidemikimura/chit-ui/themes.js';   // 付属テーマ
+import type { Message, Theme } from '@hidemikimura/chit-ui';    // 型</code></pre>
+
+          <p>タグ名を自分で決めたいときは、登録しないエントリを使います。</p>
+
+          <pre><code>import { ChitUI } from '@hidemikimura/chit-ui/element.js';
+customElements.define('my-chat', ChitUI);</code></pre>
+
+          <div class="note">
+            <p>
+              単一バンドル（<code>dist/chit-ui.min.js</code>）は Lit を同梱しています。npm 版と
+              同じページで混ぜると Lit が二重に読み込まれるので、どちらか一方にしてください。
+              <code>window.ChitUI</code> を作る IIFE 版もあります。
+            </p>
+          </div>
+
+          <h2 id="submit">送信を受ける</h2>
+
+          <p>
+            送信されると <code>chat-submit</code> が飛びます。発言を積むのも、バックエンドに
+            聞きに行くのも、あなたのコードです。ライブラリは <code>messages</code> を書き換えません。
+          </p>
+
+          <pre><code>chat.addEventListener('chat-submit', async (event) =&gt; {
+  const text = event.detail.text.trim();
+  if (!text) { event.preventDefault(); return; }   // 中止すると入力欄も消えない
+
+  chat.messages = [...chat.messages, { id: crypto.randomUUID(), role: 'user', text }];
+  chat.busy = true;         // 入力欄をロック
+  chat.loading = true;      // 応答待ちの表示
+
+  const reply = await yourBackend(text);
+
+  chat.loading = false;
+  chat.busy = false;
+  chat.messages = [...chat.messages,
+    { id: crypto.randomUUID(), role: 'assistant', text: reply }];
+});</code></pre>
+
+          <p>
+            <code>messages</code> は必ず新しい配列を代入してください。
+            <code>push</code> しても Lit からは変化が見えないため、描画されません。
+            <code>id</code> は差分描画のキーなので、同じ発言には同じ <code>id</code> を
+            使い続けます。
+          </p>
+
+          <h2 id="messages">発言の中身</h2>
+
+          <p>発言は <code>text</code> / <code>html</code> / <code>template</code> /
+            <code>element</code> / <code>component</code> のいずれか 1 つを持ちます。</p>
+
+          <pre><code>{ id: 'a', role: 'assistant', text: '承知しました。\n担当におつなぎします。' }
+{ id: 'b', role: 'assistant', html: '&lt;p&gt;&lt;a href="/orders"&gt;注文履歴&lt;/a&gt;をご覧ください&lt;/p&gt;' }
+{ id: 'c', role: 'assistant', template: html`&lt;p&gt;${name} 様&lt;/p&gt;` }
+{ id: 'd', role: 'assistant', element: myElement }
+{ id: 'e', role: 'assistant', component: 'order-card', props: { orderId: '1001' } }</code></pre>
+
+          <p>
+            <code>role</code> は <code>'user'</code> / <code>'assistant'</code> /
+            <code>'system'</code>。<code>system</code> は中央寄せの連絡行で、名前もアイコンも
+            出ません。ほかに <code>time</code>、<code>status</code>
+            （<code>'sending'</code> / <code>'sent'</code> / <code>'error'</code>）、
+            <code>streaming</code>、そして自由に使える <code>meta</code> を持てます。
+          </p>
+
+          <h3 id="text-or-html">人が書いた文章は text で</h3>
+
+          <p>
+            <code>text</code> は Lit がテキストノードとして描くので、エスケープが構造的に
+            保証されます。改行もそのまま表示されます。利用者が入力した文章、LLM が生成した文章、
+            バックエンドから返ってきた文章は、まず <code>text</code> を選んでください。
+          </p>
+
+          <p>
+            リンクや強調が必要で、かつ HTML を自分で組み立てているときだけ <code>html</code> を
+            使います。その場合は <code>sanitize</code> を必ず設定してください。
+          </p>
+
+          <pre><code>import DOMPurify from 'dompurify';
+chat.sanitize = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
+
+          <h3 id="components">コンポーネントを置く</h3>
+
+          <p>
+            <code>component</code> にはカスタム要素のタグ名かコンストラクタを渡し、
+            <code>props</code> がそのままプロパティとして代入されます。同じ <code>id</code> で
+            ある限りインスタンスは再利用され、変わった <code>props</code> だけが再代入されます。
+          </p>
+
+          <pre><code>chat.messages = [...chat.messages, {
+  id: 'order-1001',
+  role: 'assistant',
+  component: 'order-card',
+  props: { orderId: '1001', total: 4800 },
+  meta: { orderId: '1001' },
+}];</code></pre>
+
+          <p>
+            発言の中のボタンは、描画のたびにリスナーを付け直すより
+            <code>chat-message-click</code> で一括して受けるほうが簡単です。
+            <code>target</code> はコンポーネントの Shadow DOM の中まで辿ってあります。
+          </p>
+
+          <pre><code>chat.addEventListener('chat-message-click', (event) =&gt; {
+  const action = event.detail.target.closest('[data-action]')?.dataset.action;
+  if (action === 'detail') showOrder(event.detail.message.meta.orderId);
+});</code></pre>
+
+          <h3 id="streaming">ストリーミング</h3>
+
+          <p>
+            同じ <code>id</code> の発言を書き換えていきます。<code>streaming: true</code> の間は
+            末尾にカーソルが出て、<code>aria-busy</code> が立つので 1 文字ずつ読み上げられません。
+          </p>
+
+          <pre><code>const id = crypto.randomUUID();
+chat.messages = [...chat.messages, { id, role: 'assistant', text: '', streaming: true }];
+
+for await (const chunk of stream) {
+  chat.messages = chat.messages.map((m) =&gt;
+    m.id === id ? { ...m, text: m.text + chunk } : m);
+}
+
+chat.messages = chat.messages.map((m) =&gt;
+  m.id === id ? { ...m, streaming: false } : m);</code></pre>
+
+          <h2 id="state">開く・閉じる・隠す</h2>
+
+          <p>
+            状態は <code>'closed'</code>（ランチャーだけ）、<code>'open'</code>（パネル）、
+            <code>'hidden'</code>（何も出さない）の 3 つです。メソッドはアニメーションの完了で
+            resolve する Promise を返します。中止された場合は <code>false</code> です。
+          </p>
+
+          <pre><code>await chat.open();
+await chat.close();
+chat.hide();            // ログアウト中は消しておく、など
+chat.show();</code></pre>
+
+          <p>
+            <code>chat-before-open</code> / <code>chat-before-close</code> を
+            <code>preventDefault()</code> すると遷移そのものを止められます。営業時間外は開かせない、
+            といった制御はここで書きます。イベントの <code>trigger</code> を見れば、人が押したのか
+            （<code>'user'</code>）コードから呼ばれたのか（<code>'api'</code>）がわかります。
+          </p>
+
+          <h2 id="theme">テーマ</h2>
+
+          <p>
+            部分指定で構いません。書かなかった項目は既定値で埋まります。実行中に差し替えると
+            即座に反映されるので、ダークモードの切り替えにも使えます。
+          </p>
+
+          <pre><code>chat.theme = {
+  breakpoint: 768,                    // これ未満の幅をスマホとみなす
+  closed: {
+    pc:     { size: 64, image: '/icon.png', offset: { x: 24, y: 24 } },
+    mobile: { size: 56, offset: { x: 16, y: 16 } },
+  },
+  open: {
+    width: 380, height: 600,
+    colors: { accent: '#2563eb', userBubble: '#2563eb' },
+    bubble: { radius: 14, tail: 'none' },
+    header: { title: 'サポート' },
+  },
+};</code></pre>
+
+          <p>
+            <code>null</code> を渡すと既定値を消せます（<code>image: null</code> で既定アイコンを
+            外す、など）。<code>closed</code> を <code>pc</code> / <code>mobile</code> に
+            分けなければ、両方に同じ設定が使われます。スマホ幅では <code>open</code> は常に
+            全画面で、<code>width</code> と <code>height</code> は無視されます。
+          </p>
+
+          <h3 id="preset">付属テーマ</h3>
+
+          <p>見た目を一から決めたくないときは、同梱のプリセットをそのまま渡せます。</p>
+
+          <pre><code>import { greenTheme } from '@hidemikimura/chit-ui/themes.js';
+
+chat.theme = greenTheme;
+chat.theme = { ...greenTheme, open: { ...greenTheme.open, width: 420 } };   // 重ねる</code></pre>
+
+          <p>
+            <code>greenTheme</code> は淡いブルーグレーの会話背景に、相手は白・自分は黄緑の吹き出し、
+            しっぽは上向き、という配色です。特定のサービスのロゴや素材は含みません。読む必要のある
+            文字と背景の組み合わせはすべて WCAG AA（4.5:1）を満たしていて、テストが毎回検証します。
+          </p>
+
+          <h3 id="css">CSS から触る</h3>
+
+          <p>
+            テーマの値は CSS カスタムプロパティになります。ページ側の指定のほうが強いので、
+            色をひとつ変えたいだけなら CSS のほうが早いです。
+          </p>
+
+          <pre><code>chit-ui {
+  --chit-color-accent: #d81b60;
+  --chit-launcher-size: 72px;
+}
+
+chit-ui::part(bubble)  { font-size: 15px; }
+chit-ui::part(header)  { border-bottom: none; }</code></pre>
+
+          <p>
+            使える変数とパーツ名は<a href="./api.html#css">リファレンス</a>にあります。
+            <code>--_chit-</code> で始まる変数は内部用なので触らないでください。
+          </p>
+
+          <h2 id="header">タイトルバー</h2>
+
+          <pre><code>chat.theme = { open: { header: {
+  visible: true,            // false にするとタイトルバーごと消える
+  title: 'サポート',
+  logo: '/logo.png',
+  home: true,               // ホームボタンを出す
+} } };</code></pre>
+
+          <p>
+            ホームボタンは押しても何も消しません。<code>chat-home</code> を出すだけです。
+            どこまで巻き戻すか、確認を挟むかは、発言を持っているあなたが決めます。
+          </p>
+
+          <pre><code>chat.addEventListener('chat-home', (event) =&gt; {
+  if (event.detail.trigger === 'user' &amp;&amp; !confirm('最初からやり直しますか？')) return;
+  chat.messages = [firstMessage()];
+});</code></pre>
+
+          <p>
+            <code>visible: false</code> は、LINE の LIFF のように外側のアプリが既にタイトルを
+            持っている画面向けです。タイトルが二重に並ぶのを避けられます。閉じるボタンも一緒に
+            消えますが、Esc とランチャーでは閉じられます。
+          </p>
+
+          <h2 id="waiting">待っている間</h2>
+
+          <p>
+            相手が機械のとき「入力中」は実態と違うので、スピナーや文言を出す
+            <code>loading</code> を別に用意しています。<code>typing</code> とは排他で、
+            一方を <code>true</code> にすると他方は <code>false</code> になります。
+          </p>
+
+          <pre><code>chat.theme = { open: { loading: {
+  auto: true,               // 送信から相手の発言が届くまで自動
+  style: 'spinner',         // 'dots' / 'spinner' / 'text'
+  text: 'お調べしています',
+  timeout: 30000,           // ms。過ぎたら引っ込む
+} } };</code></pre>
+
+          <p>
+            <code>auto</code> を使わないなら <code>chat.loading = true</code> を自分で上げ下げ
+            します。人が相手の有人チャットなら <code>chat.typing = true</code> のほうが素直です。
+          </p>
+
+          <h2 id="input">入力欄</h2>
+
+          <pre><code>chat.theme = { open: { input: {
+  placeholder: 'ご質問をどうぞ',
+  maxRows: 5,               // これ以上は伸びずにスクロール
+  attach: true,             // 画像・動画の添付ボタンを出す
+  accept: 'image/*,video/*',
+  multiple: false,
+} } };</code></pre>
+
+          <p>
+            添付ボタンはファイルが選ばれると <code>chat-attach</code>
+            （<code>detail.files</code> は <code>File[]</code>）を出して手を離します。
+            アップロードもプレビューも発言の追加もしません。
+          </p>
+
+          <p>
+            <code>chat.inputDisabled = true</code> は見せたままロック、
+            <code>chat.inputHidden = true</code> は入力欄ごと消します。消しても
+            <code>submit(text)</code> は使えるので、選択肢のボタンだけで進むシナリオ型の会話が
+            作れます。
+          </p>
+
+          <h2 id="speaker">発言者の名前とアイコン</h2>
+
+          <pre><code>chat.theme = { open: { speaker: {
+  assistant: { name: '担当', avatar: '/support.png' },
+  user:      { name: null,  avatar: null },
+} } };</code></pre>
+
+          <p>
+            発言側の <code>name</code> / <code>avatar</code> のほうが優先されます。発言に
+            <code>null</code> を書けばテーマの指定を打ち消せるので、「同じ人が続けて話すときは
+            2 件目以降のアイコンを省く」といった見せ方も作れます。連続かどうかの判定は
+            ライブラリではしません。<code>messages</code> を持っているのはあなただからです。
+          </p>
+
+          <h2 id="tail">吹き出しのしっぽ</h2>
+
+          <pre><code>chat.theme = { open: { bubble: { radius: 18, tail: 'top' } } };</code></pre>
+
+          <p>
+            <code>tail</code> は <code>'none'</code>（既定）/ <code>'top'</code> /
+            <code>'bottom'</code>。角丸をいくつにしても継ぎ目に隙間が出ないように、しっぽの
+            根元を吹き出しの内側に潜り込ませてあります。<code>clip-path: path()</code> に
+            対応していないブラウザではしっぽが出ず、ふつうの吹き出しとして表示されます。
+          </p>
+
+          <h2 id="launcher">閉じた状態を自分で描く</h2>
+
+          <p>3 通りあります。画像やラベルを渡す、スロットに中身を入れる、丸ごと差し替える。</p>
+
+          <pre><code>chat.theme = { closed: { image: '/icon.png', label: 'お問い合わせ' } };</code></pre>
+
+          <pre><code>&lt;chit-ui&gt;
+  &lt;span slot="launcher" class="badge"&gt;3&lt;/span&gt;
+&lt;/chit-ui&gt;</code></pre>
+
+          <pre><code>chat.theme = { closed: { component: 'pill-launcher', props: { text: '相談する' } } };</code></pre>
+
+          <p>
+            <code>component</code> を渡したときは、外側のボタンが幅・高さ・背景・影・角丸・余白を
+            手放します。ひとつの箱を両方からスタイルすると、はみ出しや切り取りが起きるためです。
+            ボタンであること（読み上げ名、開閉状態、キーボード操作）は残ります。
+          </p>
+
+          <h2 id="drag">ドラッグで動かす</h2>
+
+          <pre><code>chat.theme = { closed: { draggable: true }, open: { draggable: true } };</code></pre>
+
+          <p>
+            閉じた状態はランチャーそのもの、開いた状態はタイトルバーが取っ手です。矢印キーでも
+            動かせます（Shift で大きく）。画面の外には出られません。
+          </p>
+
+          <p>
+            動かしているのは位置そのものではなく「テーマの位置からのずれ」で、閉じた状態と開いた
+            状態がそれをひとつだけ共有します。ランチャーを動かしてから開けばパネルも同じだけずれ、
+            その逆も同じです。2 つは同じウィジェットの別の姿なので、片方だけ元の場所に残るほうが
+            不自然だからです。
+          </p>
+
+          <pre><code>chat.addEventListener('chat-move', (event) =&gt; {
+  localStorage.setItem('chit-offset', JSON.stringify(event.detail.displacement));
+});
+
+const saved = localStorage.getItem('chit-offset');
+if (saved) chat.dragOffset = JSON.parse(saved);   // 復元
+chat.resetPosition();                              // テーマの位置に戻す</code></pre>
+
+          <h2 id="scroll">スクロールの追従</h2>
+
+          <p>
+            新しい発言が届いたとき、最下部にいる読み手の画面はアニメーションで追従します。
+            さかのぼって読んでいる人は動かされず、「最新へ」のボタンが出ます。自分が送った発言は
+            どこにいても表示されます。押して送ったばかりなのだから、見えていてほしいからです。
+          </p>
+
+          <pre><code>chat.theme = { open: { animation: { scroll: 'instant' } } };   // 追従を即時に</code></pre>
+
+          <p>
+            ひとつの発言が伸びていく場合（ストリーミング、画像の読み込み）は設定によらず即時です。
+            <code>prefers-reduced-motion</code> が有効な環境でも即時になります。
+          </p>
+
+          <p>
+            一覧が最上部に達すると <code>chat-scroll-top</code> が 1 回だけ出ます。古い発言の
+            追い読みはここで。
+          </p>
+
+          <h2 id="mobile">スマホでの振る舞い</h2>
+
+          <p>
+            幅が <code>breakpoint</code>（既定 768）未満のときはパネルが全画面になります。
+            そのうえで、スマホでよく壊れるところを先に潰してあります。
+          </p>
+
+          <ul>
+            <li>
+              入力欄の文字は 16px を下回りません。iOS Safari はそれより小さい欄にフォーカスすると
+              ページを拡大し、離れても戻さないためです。ウィジェット全体の文字サイズは変わりません。
+            </li>
+            <li>
+              キーボードが出ている間、パネルは見えている範囲（<code>visualViewport</code>）に
+              収まります。入力欄と直前の発言がキーボードの下に隠れません。
+            </li>
+            <li>
+              パネルの上を指でなぞっても、後ろのページはスクロールしません。会話が短くて
+              スクロールするものが無いときも同じです。
+            </li>
+            <li>ピンチでの拡大には手を出しません。拡大は読み手のものだからです。</li>
+          </ul>
+
+          <h2 id="a11y">アクセシビリティ</h2>
+
+          <ul>
+            <li>
+              ランチャーは <code>button</code>、パネルは <code>role="dialog"</code>、
+              発言一覧は <code>role="log"</code> + <code>aria-live="polite"</code>
+            </li>
+            <li>Esc で閉じ、開閉に合わせてフォーカスがランチャーとパネルの間を行き来します</li>
+            <li>ストリーミング中の発言は <code>aria-busy="true"</code> です</li>
+            <li><code>prefers-reduced-motion</code> を尊重します</li>
+            <li>既定テーマと付属テーマの配色は、すべて WCAG AA（4.5:1）以上です</li>
+          </ul>
+
+          <h2 id="browsers">対応ブラウザ</h2>
+
+          <p>
+            Chrome / Edge / Firefox / Safari の最新 2 バージョンと iOS Safari 16 以降。
+            IE は非対応です。
+          </p>
+
+          <h2 id="ai">AI に書かせるとき</h2>
+
+          <p>
+            パッケージに <code>skills/chit-ui/</code> が入っています。Claude Code などの
+            コーディング支援に読ませると、<code>messages</code> の所有者が利用者側であることや、
+            <code>push</code> では描画されないことといった、このライブラリの癖を踏まえた
+            コードになります。
+          </p>
+
+          <pre><code>mkdir -p .claude/skills
+ln -s ../../node_modules/@hidemikimura/chit-ui/skills/chit-ui .claude/skills/chit-ui</code></pre>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>MIT License · Hidemi Kimura</span>
+        <span>
+          <a href="https://github.com/hidemikimura/chit-ui">GitHub</a> ·
+          <a href="https://www.npmjs.com/package/@hidemikimura/chit-ui">npm</a>
+        </span>
+      </div>
+    </footer>
+
+    <chit-ui></chit-ui>
+    <script type="module" src="./assets/site.js"></script>
+  </body>
+</html>
